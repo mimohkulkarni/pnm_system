@@ -1,0 +1,94 @@
+section{
+    background-color: white;
+    padding: 20px;
+}
+
+.get-in-touch {
+    max-width: 800px;
+    margin: 50px auto;
+    position: relative;
+  
+}
+.get-in-touch .title {
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 3.2em;
+    line-height: 48px;
+    padding-bottom: 48px;
+    /* color: #5543ca;
+    background: #5543ca; */
+    background: -moz-linear-gradient(left,#f4524d  0%,#5543ca 100%) !important;
+    background: -webkit-linear-gradient(left,#f4524d  0%,#5543ca 100%) !important;
+    background: linear-gradient(to right,#f4524d  0%,#5543ca  100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+.contact-form{    
+    margin: 32px 0;
+}
+
+.col-lg-12{
+    padding: 0;
+}
+
+.contact-form .form-field {
+    position: relative;
+}
+.contact-form .input-text, .contact-form .input-textarea {
+    display: block;
+    width: 100%;
+    height: 36px;
+    border-width: 0 0 2px 0;
+    /* border-color: #5543ca; */
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 400;
+}
+
+textarea {
+    height: 80px !important;
+}
+.contact-form .input-text:focus, .contact-form .input-textarea:focus {
+    outline: none;
+    color: black;
+}
+.contact-form .input-text:focus + .label,
+.contact-form .input-text:valid + .label {
+    -webkit-transform: translateY(-24px);
+    transform: translateY(-24px);
+}
+.contact-form .input-textarea:focus + .label,
+.contact-form .input-textarea:valid + .label {
+    -webkit-transform: translateY(-60px);
+    transform: translateY(-60px);
+}
+.contact-form .label {
+    position: absolute;
+    left: 20px;
+    bottom: 11px;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 400;
+    color: darkgray;
+    cursor: text;
+    transition: -webkit-transform .2s ease-in-out;
+    transition: transform .2s ease-in-out;
+    transition: transform .2s ease-in-out, 
+    -webkit-transform .2s ease-in-out;
+}
+.contact-form .submit-btn {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 16px;
+    padding: 8px 16px;
+    width: 90%;    
+    background-color: #3274d6;
+    border: 0;
+    cursor: pointer;
+    font-weight: bold;
+    color: #ffffff;
+    transition: background-color 0.2s;
+}

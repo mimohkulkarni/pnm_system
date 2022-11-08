@@ -1,0 +1,59 @@
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<link href="/css/style.css" rel="stylesheet" type="text/css">
+<link href="/css/addRequest.css" rel="stylesheet" type="text/css">
+<!------ Include the above in your HEAD tag ---------->
+
+<section class="get-in-touch">
+   <h1 class="titleh1">
+      <%- params.id ? "Edit Request" : "Create Request" %>
+   </h1>
+   <form class="contact-form row" action="./<%- params.id ? '' : 'add' %>" method="post">
+      <% if(params.id) { %>
+         <input name="id" type="hidden" value='<%= params.id %>' />
+      <% } %>
+      <div class="form-field col-lg-12">
+         <% if(params.title) { %>
+            <input name="title" class="input-text js-input" type="text" value='<%= params.title %>' required>
+         <% } else { %>
+            <input name="title" class="input-text js-input" type="text" required>
+         <% } %>
+         <label class="label" for="title">Title</label>
+      </div>
+      <% if (params.titleError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Invalid title</strong>
+         </div>
+       <% } %>
+       <div class="form-field col-lg-12 mt-5">
+         <textarea name="description" class="input-textarea js-input" type="text" rows="5" required><%- params.desc ? params.desc : "" %></textarea>
+         <label class="label" for="description">Description</label>
+      </div>      
+      <% if (params.descError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Invalid description</strong>
+         </div>
+       <% } %>
+      <div class="form-field col-lg-12 mt-5">
+         <select name="meeting" class="form-control">
+           <option selected>Select Meeting</option>
+           <% params.meetings.forEach(meeting => { %>
+             <option value="<%= meeting.id %>"><%= meeting.name %></option>
+          <% }) %>
+         </select>
+      </div>
+      <% if (params.meetingError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Please select meeting</strong>
+         </div>
+       <% } %>
+      <div class="form-field col-lg-12 text-center mt-5">
+         <input class="submit-btn" type="submit" value="Submit">
+         <% if (params.queryError) { %>
+            <div class="alert alert-success alert-dismissible text-center fade show" role="alert">
+              <strong>Opps! Request did not create. Please try again in some time.</strong>
+            </div>
+          <% } %>
+      </div>
+   </form>
+</section>

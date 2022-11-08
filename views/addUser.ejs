@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users</title>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <link href="/css/style.css" rel="stylesheet" type="text/css">
+  <link href="/css/addRequest.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+  <section class="get-in-touch">
+    <h1 class="titleh1">
+       <%- params.id ? "Edit User" : "Create User" %>
+    </h1>
+    <form class="contact-form row" action="./<%- params.id ? 'edit' : 'add' %>" method="post">
+       <% if(params.id) { %>
+          <input name="id" type="hidden" value='<%= params.id %>' />
+       <% } %>
+       <div class="form-field col-lg-12">
+         <input name="first_name" class="input-text js-input" type="text" value='<%- params.first_name ? params.first_name : "" %>' required>
+         <label class="label" for="first_name">First Name<span class="required">*</span></label>
+       </div>
+       <% if (params.fnameError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Invalid first name</strong>
+         </div>
+       <% } %>
+       <div class="form-field col-lg-12 mt-5">
+         <input name="last_name" class="input-text js-input" type="text" value='<%- params.last_name ? params.first_name : "" %>' required>
+         <label class="label" for="last_name">Last Name<span class="required">*</span></label>
+       </div>
+       <% if (params.lnameError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Invalid last name</strong>  
+         </div>
+       <% } %>
+       <div class="form-field col-lg-12 mt-5">
+         <input name="emp_no" class="input-text js-input" type="text" value='<%- params.emp_no ? params.emp_no : "" %>' required>
+         <label class="label" for="emp_no">Employee Number<span class="required">*</span></label>
+       </div>
+       <% if (params.empnoError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Invalid employee number</strong>
+         </div>
+       <% } %>
+       <div class="form-field col-lg-12 mt-5">
+         <select name="level" id="levelSelect" class="form-control" type="text" value='<%- params.level ? params.level : "" %>'>
+           <option selected>Select Designation</option>
+           <option value="1">Chief OS</option>
+           <option value="2">DPO</option>
+           <option value="3">BO</option>
+           <option value="4">OS</option>
+           <option value="5">CRMS/NRMU Officer</option>
+         </select>
+       </div>
+       <div id="category_div" style="display: none;" class="w-100">
+         <div class="form-field col-lg-12 mt-5">
+           <select name="category" class="form-control" type="text" value='<%- params.category ? params.category : "" %>'>
+             <option selected>Select Category</option>
+             <% params.categories.forEach(category => { %>
+               <option value="<%= category.id %>"><%= category.name %></option>
+            <% }) %>
+           </select>
+         </div>
+         <% if (params.categoryError) { %>
+           <div class="alert alert-danger mt-2 w-100" role="alert">
+             <strong>Please select a category</strong>
+           </div>
+         <% } %>
+       </div>
+       <div class="form-field col-lg-12 text-center mt-5">
+          <input class="submit-btn" type="submit" value="Create">
+          <% if (params.queryError) { %>
+             <div class="alert alert-success alert-dismissible text-center fade show" role="alert">
+               <strong>Opps! Request did not create. Please try again in some time.</strong>
+             </div>
+           <% } %>
+       </div>
+    </form>
+ </section>
+ <script>
+  $("#levelSelect").on("change", function() {
+    const value = $(this).val();
+    if(value == 3 || value == 4) $("#category_div").show();
+    else $("#category_div").hide();
+  })
+ </script>
+</body>
+</html>
