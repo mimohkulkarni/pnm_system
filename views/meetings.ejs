@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Manage Meetings</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <link href="/css/style.css" rel="stylesheet" type="text/css">
+    <link href="/css/request.css" rel="stylesheet" type="text/css">
+    <script>
+        $(document).ready(function(){
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
+</head>
+<body>
+    <%- include('./components/navbar') -%>
+    <div class="container-fluid">
+        <div class="table-responsive">
+            <% if (params.add) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  <strong>User created successfully</strong>
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>      
+              <% } %>
+            <% if (params.edit) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  <strong>User edited successfully</strong>
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>      
+              <% } %>
+            <div class="table-wrapper">
+                <div class="table-title">
+                    <div class="row w-100">
+                        <div class="col-sm-6">
+                            <h2>Manage <b>Meetings</b></h2>
+                        </div>
+                        <div class="col-sm-6 text-right">                            
+                            <% if (params.user_level === 1) { %>
+                                <button class="btn btn-success" id="btn_create_meeting" data-toggle="modal" data-target="#meeting_modal">
+                                    <i class="fas fa-plus"></i> <span>Create New Meeting</span>
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>                
+                <% if(params.meetings.length > 0 && params.user_level === 1) { %>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: auto;">Name</th>
+                            <th>Meeting Date</th>
+                            <th>Created By</th>
+                            <th>Assigned Requests</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% params.meetings.forEach(meeting => { %>
+                            <tr>
+                                <td><%= meeting.name %></td>
+                                <td><%= meeting.meeting_date %></td>
+                                <td><%= meeting.created_by %></td>
+                                <td><%- meeting.assigned_requests %></td>
+                                <td>
+                                    <a href="#" role="button" data-id="<%= meeting.id %>" class="edit btn_edit_meeting">
+                                        <i class="far fa-edit" data-toggle="tooltip" title="Edit"></i>
+                                    </a>
+                                    <a href="/meetings/delete/<%= meeting.id %>" class="delete" onclick="return confirm('Do you want to delete this meeting?')">
+                                        <i class="far fa-trash-alt" data-toggle="tooltip" title="Delete"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+                <% } else { %>
+                    <h5 class="text-center font-weight-bold">No Meetings Found!</h5>
+                <% } %>
+            </div>
+        </div>        
+    </div>
+    <!-- Edit Modal HTML -->
+    <div id="addEmployeeModal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form>
+                    <div class="modal-header">						
+                        <h4 class="modal-title">Add Employee</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    </div>
+                    <div class="modal-body">					
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea class="form-control" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="text" class="form-control" required>
+                        </div>					
+                    </div>
+                    <div class="modal-footer">
+                        <input type="button" class="btn btn-default" data-dismiss="modal" value="Cancel">
+                        <input type="submit" class="btn btn-success" value="Add">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <% if (params.user_level === 1) { %>
+        <div class="modal" tabindex="-1" id="meeting_modal">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create New Meeting</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6 text-black">
+                                <h6>Select Meeting Date</h6>
+                            </div>
+                            <div class="col-6 px-2">
+                                <input type="date" class="form-control" id="meeting_date" />
+                            </div>
+                            <div class="col-6 text-black mt-3">
+                                <h6>Meeting Name</h6>
+                            </div>
+                            <div class="col-6 px-2 mt-3">
+                                <input type="text" class="form-control" id="meeting_name" />
+                            </div>
+                            <div class="col-6 text-black mt-3">
+                                <h6>Select Union</h6>
+                            </div>
+                            <div class="col-6 px-2 mt-3">
+                                <select class="form-control" id="union_id">
+                                    <option selected>Select</option>
+                                    <option value="1">NRMU</option>
+                                    <option value="2">CRMS</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="meetingErrorDiv" style="display: none;">
+                            <strong>Invalid entries!</strong>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" id="btn_add_meeting">Create</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
+    <script>        
+      $(document).ready(function(){
+        const meetings = <%- params.meetings.length > 0 ? JSON.stringify(params.meetings) : [] %>;
+        let meeting_id = null;
+        
+        $(".btn_edit_meeting").on('click',function() {
+            meeting_id = parseInt($(this).data("id"));
+            if(meeting_id){
+                const meeting = meetings.find(me => me.id == meeting_id);
+                $("#meeting_date").val(new Date(meeting.meeting_date).toISOString().split('T')[0]);
+                $("#meeting_name").val(meeting.name);
+                $("#union_id").val(meeting.union_id);
+                $("#meeting_modal").modal("show");
+            } 
+        });
+
+        $("#btn_add_meeting").on('click',function() {
+            const meeting_date = $("#meeting_date").val();
+            const meeting_name = $("#meeting_name").val();
+            const union_id = $("#union_id").val();
+            if(meeting_date && meeting_name && union_id){
+                const form = $('<form method="post"></form>').prop("action", meeting_id ? "/meetings/editMeeting" : "/meetings/createMeeting");
+                if(meeting_id) form.append($("<input>").attr("type", "hidden").attr("name", "id").val(meeting_id));
+                form.append($("<input>").attr("type", "hidden").attr("name", "meeting_date").val(remarks));
+                form.append($("<input>").attr("type", "hidden").attr("name", "meeting_name").val(remarks));
+                form.append($("<input>").attr("type", "hidden").attr("name", "union_id").val(remarks));
+                form.appendTo('body').submit();
+                $("#meeting_modal").modal("hide");
+            }
+            else $("#meetingErrorDiv").show();
+        });
+
+        $('#myModal').on('hidden.bs.modal', function (e) {
+            $("#meetingErrorDiv").hide();
+            meeting_id = null;
+        });
+
+      });
+    </script>
+</body>
+</html>

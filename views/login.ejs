@@ -5,26 +5,84 @@
 		<meta name="viewport" content="width=device-width,minimum-scale=1">
 		<title>Login</title>
         <!-- the form awesome library is used to add icons to our form -->
+    	<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
         <!-- include the stylesheet file -->
    		<link href="/css/style.css" rel="stylesheet" type="text/css">
         <link href="/css/login.css" rel="stylesheet" type="text/css">
+		<style>
+			.alert strong{
+				font-size: 15px !important;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="login">
-			<h1 class="titleh1">Login</h1>
-			<form action="/login" method="post">
-				<label for="username">
-					<!-- font awesome icon -->
-					<i class="fas fa-user"></i>
-				</label>
-				<input type="text" name="username" placeholder="Username" id="username" required value="1234">
-				<label for="password">
-					<i class="fas fa-lock"></i>
-				</label>
-				<input type="password" name="password" placeholder="Password" id="password" required value="123">
-				<input type="submit" value="Login">
-			</form>
+			<% if(!params.password_change) { %>
+				<h1 class="titleh1">Login</h1>
+				<form action="/login" method="post">
+					<label for="username">
+						<i class="fas fa-lock"></i>
+					</label>
+					<input type="text" name="username" placeholder="Username" id="username" required value="1234">
+					<% if (params.usernameError) { %>
+						<div class="alert alert-danger mt-2 w-100" role="alert">
+							<strong>Invalid Username</strong>
+						</div>
+					<% } %>
+					<label for="password">
+						<i class="fas fa-lock"></i>
+					</label>
+					<input type="password" name="password" placeholder="Password" id="password" minlength="3" required value="123">
+					<% if (params.passwordError) { %>
+						<div class="alert alert-danger mt-2 w-100" role="alert">
+							<strong>Invalid Password</strong>
+						</div>
+					<% } %>
+					<input type="submit" value="Login"/>
+					<% if (params.loginError) { %>
+						<div class="alert alert-danger mt-2 w-75 mx-auto" role="alert">
+							<strong>Invalid Username and Password Combination</strong>
+						</div>
+					<% } %>
+				</form>
+			<% } else { %>
+				<h1 class="titleh1">Password Update</h1>
+				<form>
+					<input type="hidden" id="user_id" value="<%= params.id %>"/>
+					<label for="change_password">
+						<i class="fas fa-user"></i>
+					</label>
+					<input type="password" placeholder="password" id="change_password" minlength="6" required value="1234">
+					<label for="password">
+						<i class="fas fa-lock"></i>
+					</label>
+					<input type="password" placeholder="Password" id="change_password_1" minlength="6" required value="123">
+					<div class="alert alert-danger mt-2 w-100" role="alert" id="passwordErrorDiv" style="display: none;">
+						<strong>Invalid Password/s</strong>
+					</div>
+					<% if(params.queryError) { %>
+						<div class="alert alert-danger mt-2 w-100" role="alert">
+							<strong>Invalid Password/s</strong>
+						</div>
+					<% } %>
+					<button type="button" id="btn_password_change">Submit</button>
+				</form>
+			<% } %>
 		</div>
+		<script>
+			$(document).ready(function(){
+				$("#btn_password_change").on("click", function() {
+					if($("#change_password").val() === $("#change_password").val()){
+						const form = $('<form method="post"></form>').prop("action", "/login/changePassword");
+						form.append($("<input>").attr("type", "hidden").attr("name", "id").val($("#user_id").val()));
+						form.append($("<input>").attr("type", "hidden").attr("name", "password").val($("#change_password").val()));
+						form.appendTo('body').submit();
+					}
+					else $("#passwordErrorDiv").show();
+				});
+			})
+		</script>
 	</body>
 </html>

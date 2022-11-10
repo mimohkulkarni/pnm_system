@@ -92,3 +92,68 @@ textarea {
     color: #ffffff;
     transition: background-color 0.2s;
 }
+
+.request-list{
+    width: 100%;
+    padding: 10px;
+}
+
+.btn{
+    border-radius: 25px;
+    max-height: 80px;
+}
+
+.request{
+    margin: 20px auto;
+    max-width: 900px;
+    background-color: white;
+    border-radius: 25px;
+    padding: 20px;
+}
+
+.request-card{
+    border: 1px solid black;
+    border-radius: 25px;
+    padding: 5px 12px;
+    word-break: break-all !important;
+}
+
+.request-card b{
+    font-size: small;
+    margin: 0;
+    margin-top: -17px !important;
+    position: absolute;
+    padding: 0 5px;
+    background-color: white;
+}
+
+.request-card p{
+    font-size: medium;
+    margin: 0;
+    padding-left: 10px;
+}
+
+.col-lg-12.col-md-12.col-sm-12{
+    padding: 0 15px;
+}
+  
+.list-item{
+    border-radius: 18px !important;
+    border: 0.2px solid darkgray;
+    padding: 5px;
+    width: 100%;
+    margin-right: 10px;
+    background-color: inherit;
+    font-size: 14px;
+    line-height: 2.2rem;
+}
+
+.status{
+    border-radius: 25px;
+    background-color: lightgreen;
+    padding: 10px 15px;
+}
+
+.status-closed{
+    background-color: lightcoral;
+}

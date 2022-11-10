@@ -48,13 +48,22 @@
          </div>
        <% } %>
        <div class="form-field col-lg-12 mt-5">
-         <select name="level" id="levelSelect" class="form-control" type="text" value='<%- params.level ? params.level : "" %>'>
+         <input name="mob_no" class="input-text js-input" type="number" value='<%- params.mob_no ? params.mob_no : "" %>' required>
+         <label class="label" for="mob_no">Mobile Number<span class="required">*</span></label>
+       </div>
+       <% if (params.mobnoError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Invalid mobile number</strong>
+         </div>
+       <% } %>
+       <div class="form-field col-lg-12 mt-5">
+         <select name="level" id="levelSelect" class="form-control">
            <option selected>Select Designation</option>
-           <option value="1">Chief OS</option>
-           <option value="2">DPO</option>
-           <option value="3">BO</option>
-           <option value="4">OS</option>
-           <option value="5">CRMS/NRMU Officer</option>
+           <option value="1" <%- params.level == 1 ? "selected" : "" %>>Chief OS</option>
+           <option value="2" <%- params.level == 2 ? "selected" : "" %>>DPO</option>
+           <option value="3" <%- params.level == 3 ? "selected" : "" %>>BO</option>
+           <option value="4" <%- params.level == 4 ? "selected" : "" %>>OS</option>
+           <option value="5" <%- params.level == 5 ? "selected" : "" %>>CRMS/NRMU Officer</option>
          </select>
        </div>
        <div id="category_div" style="display: none;" class="w-100">
@@ -62,7 +71,7 @@
            <select name="category" class="form-control" type="text" value='<%- params.category ? params.category : "" %>'>
              <option selected>Select Category</option>
              <% params.categories.forEach(category => { %>
-               <option value="<%= category.id %>"><%= category.name %></option>
+               <option value="<%= category.id %>" <%- params.category_id == category.id ? "selected" : "" %>><%= category.name %></option>
             <% }) %>
            </select>
          </div>
@@ -73,7 +82,7 @@
          <% } %>
        </div>
        <div class="form-field col-lg-12 text-center mt-5">
-          <input class="submit-btn" type="submit" value="Create">
+          <input class="submit-btn" type="submit" value="<%- params.id ? 'Edit' : 'Create' %>">
           <% if (params.queryError) { %>
              <div class="alert alert-success alert-dismissible text-center fade show" role="alert">
                <strong>Opps! Request did not create. Please try again in some time.</strong>
@@ -83,6 +92,9 @@
     </form>
  </section>
  <script>
+  const level =  <%- params.level ? JSON.stringify(params.level) : "null" %>
+  console.log(level);
+  if(level == 3 || level == 4) $("#category_div").show();
   $("#levelSelect").on("change", function() {
     const value = $(this).val();
     if(value == 3 || value == 4) $("#category_div").show();

@@ -54,100 +54,64 @@
                                     <i class="fas fa-plus"></i> <span>Add New Request</span>
                                 </a>
                             <% } %>
-                            <% if (params.user_level === 1) { %>
-                                <button class="btn btn-success" id="btn_create_meeting" data-toggle="modal" data-target="#meeting_modal">
-                                    <i class="fas fa-plus"></i> <span>Create New Meeting</span>
-                                </button>
-                            <% } %>
                         </div>
                     </div>
-                </div>                
-                <% if(params.requests.length > 0) { %>
-                <div class="w-100 text-right mb-3">
-                    <button class="btn btn-success" id="btnSend">
-                        <i class="fas fa-paper-plane"></i> Send
-                    </button>
                 </div>
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th class="titleTh">Title</th>
-                            <th class="descTh">Description</th>
-                            <th>Created By</th>
-                            <th>Created On</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% params.requests.forEach(request => { %>
-                            <tr>
-                                <td><%= request.title %></td>
-                                <td><%= request.description.length > 50 ? request.description.substring(0,50) + "..." : request.description %></td>
-                                <td><%= request.created_by %></td>
-                                <td><%= request.created_at %></td>
-                                <td><%= request.status %></td>
-                                <td>
-                                    <% if (params.user_level === 5 && !request.approved) { %>
-                                        <a href="/requests/edit/<%= request.id %>" class="edit">
-                                            <i class="far fa-edit" data-toggle="tooltip" title="Edit"></i>
-                                        </a>
-                                        <a href="/requests/delete/<%= request.id %>" class="delete"  onclick="return confirm('Do you want to delete this request?')">
-                                            <i class="far fa-trash-alt" data-toggle="tooltip" title="Delete"></i>
-                                        </a>
-                                    <% } %>
-                                    <a href="/requests/view/<%= request.id %>" class="view">
-                                        <i class="fas fa-info"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
+                <% if(params.requests.length > 0) { %>
+                    <!-- <div class="w-100 text-right mb-3">
+                        <button class="btn btn-success" id="btnSend">
+                            <i class="fas fa-paper-plane"></i> Send
+                        </button>
+                    </div> -->
+                    <div class="row mb-3">
+                        <div class="<%- params.user_level === 1 ? 'col-3' : 'col-6' %>">
+                        </div>
+                        <% if (params.user_level === 1) { %>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="request-card">
+                                    <b>Union Type</b>
+                                    <select class="form-control" id="unionSelect">
+                                        <option value="0">All</option>
+                                        <option value="1">NRMU</option>
+                                        <option value="2">CRMS</option>
+                                    </select>
+                                </div>
+                            </div>
+                        <% } %>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <div class="request-card">
+                                <b>Meeting</b>
+                                <select class="form-control" id="meetingSelect">
+                                    <option value="0">All</option>
+                                    <% params.meetings.forEach(meeting => { %>
+                                        <option value="<%= meeting.id %>"><%= meeting.name %></option>
+                                    <% }) %>
+                                </select>
+                             </div>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <div class="request-card">
+                                <b>Request Type</b>
+                                <select class="form-control" id="typeSelect">
+                                    <option value="0">All</option>
+                                    <option value="1">Open</option>
+                                    <option value="2">Closed</option>
+                                </select>
+                             </div>
+                        </div>
+                    </div>
+                    <table class="table table-striped table-hover" id="requestsTable">
+                    </table>
                 <% } else { %>
                     <h5 class="text-center font-weight-bold">No Requests Found!</h5>
                 <% } %>
             </div>
         </div>
-        <% if (params.user_level === 1) { %>
-            <div class="modal" tabindex="-1" id="meeting_modal">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <form action="/requests/createMeeting" method="post">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Create New Meeting</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-6 text-black">
-                                        <h6>Select Meeting Date</h6>
-                                    </div>
-                                    <div class="col-6 px-2">
-                                        <input type="date" class="form-control" name="meeting_date" />
-                                    </div>
-                                    <div class="col-6 text-black mt-3">
-                                        <h6>Meeting Name</h6>
-                                    </div>
-                                    <div class="col-6 px-2 mt-3">
-                                        <input type="text" class="form-control" name="meeting_name" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-success">Create</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        <% } %>
     </div>
     <script>
         $(document).ready(function(){
+            const requests = <%- params.requests.length > 0 ? JSON.stringify(params.requests) : [] %>;
+            const user_level = <%- parseInt(params.user_level) %>;
             const category_ids = <%- params.requests.length > 0 ? JSON.stringify(params.requests.map(r => r.category_id)) : "null" %>;
             $('[data-toggle="tooltip"]').tooltip();
             $("#btnSend").hide();
@@ -179,7 +143,6 @@
                 if(showSendBtn) $("#btnSend").show();
                 if(!showSendBtn) $("#btnSend").hide();
             });
-            const user_level = <%- params.user_level ? JSON.stringify(params.user_level) : "null" %>;
             $("#btnSend").on("click", function(){
                 if([1,2].includes(user_level)){
                     const ids = [];
@@ -197,9 +160,57 @@
                     // form.appendTo('body').submit();
                 }
             });
-            $("#btn_create_meeting").on("click", function(){
+            
+            const thead = `<thead><tr><th class="titleTh">Title</th><th class="descTh">Description</th><th>Created By</th>
+                <th>Created On</th><th>Status</th><th>Actions</th></tr></thead>`
+            
+            $("#unionSelect,#typeSelect,#meetingSelect").on("change", () => displayRequests());
 
-            });
+            displayRequests();
+
+            function displayRequests(){
+                const union = parseInt($("#unionSelect").val());
+                const type = parseInt($("#typeSelect").val());
+                const meeting = parseInt($("#meetingSelect").val());
+                let filteredRequests = [...requests];
+                if(union)
+                    filteredRequests = filteredRequests.filter(re => re.union_id === union);
+                if(type)
+                    filteredRequests = filteredRequests.filter(re => (type === 1 && re.open === 1) || (type === 2 && !re.open));
+                if(meeting)
+                    filteredRequests = filteredRequests.filter(re => re.meeting_id === meeting);
+                $("#requestsTable").empty();
+                if(filteredRequests.length > 0){
+                    $("#requestsTable").append(thead);
+                    filteredRequests.forEach(request => {
+                        $("#requestsTable").append(`
+                            <tr>
+                                <td>${request.title}</td>
+                                <td>${request.description.length > 50 ? request.description.substring(0,50) + "..." : request.description}</td>
+                                <td>${request.created_by}</td>
+                                <td>${request.created_at}</td>
+                                <td>${request.status}</td>
+                                <td>
+                                    ${user_level === 5 && !request.approved ? 
+                                        `<a href="/requests/edit/${request.id}" class="edit">
+                                            <i class="far fa-edit" data-toggle="tooltip" title="Edit"></i>
+                                        </a>`
+                                    : ""}
+                                    ${user_level === 5 && !request.approved ? 
+                                        `<a href="/requests/delete/${request.id}" class="delete" onclick="return confirm('Do you want to delete this request?')">
+                                            <i class="far fa-trash-alt" data-toggle="tooltip" title="Delete"></i>
+                                        </a>`
+                                    : ""}
+                                    <a href="/requests/view/${request.id}" class="view">
+                                        <i class="fas fa-info"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        `);    
+                    });
+                }
+                else $("#requestsTable").append(`<h5 class="text-center font-weight-bold">No Requests Found!</h5>`);
+            }
         });
     </script>
 </body>

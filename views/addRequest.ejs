@@ -38,7 +38,7 @@
          <select name="meeting" class="form-control">
            <option selected>Select Meeting</option>
            <% params.meetings.forEach(meeting => { %>
-             <option value="<%= meeting.id %>"><%= meeting.name %></option>
+             <option value="<%= meeting.id %>" <%- params.meeting_id === meeting.id ? "selected" : "" %>><%= meeting.name %></option>
           <% }) %>
          </select>
       </div>
