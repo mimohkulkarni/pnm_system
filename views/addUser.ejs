@@ -12,6 +12,7 @@
   <link href="/css/addRequest.css" rel="stylesheet" type="text/css">
 </head>
 <body>
+  <%- include('./components/navbar', {page: "users", user_level: params.user_level ? params.user_level : null}) -%>
   <section class="get-in-touch">
     <h1 class="titleh1">
        <%- params.id ? "Edit User" : "Create User" %>

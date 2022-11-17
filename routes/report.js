@@ -4,7 +4,7 @@ const connection = require('../connection');
 route.get('/', async(req, res) => {
     const params = {
         requests: [],
-        user_level: req.session.user.level
+        user_level: 1
     }
     const meetings = await connection.query("SELECT * FROM meeting");
     params.meetings = meetings;
@@ -15,7 +15,7 @@ route.post('/', async (req, res) => {
     const params = {
         requests: [],
         dateError: false,
-        user_level: req.session.user.level
+        user_level: 1
     }
     const meeting_id = req.body.meeting_id;
     if(meeting_id){
@@ -38,6 +38,7 @@ route.post('/', async (req, res) => {
                 return res.render("reports", {params: params});
             }
             const categories = await connection.query("SELECT * FROM categories");
+            params.summary = [];
             for (const request of result) {
                 const remarks = await connection.query(`SELECT re.created_by, re.created_at, re.remark, us.level, re.meeting_remarks,
                     CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")"), us.level AS remarked_by
@@ -51,9 +52,17 @@ route.post('/', async (req, res) => {
                 request.created_at = new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString();
                 request.closed_at = request.closed_at ? new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString() : null;
                 request.status = request.open === 0 ? "Closed" : request.category_ids.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
+                if(request.category_id){
+                    request.category_id.split(",").forEach(c => {
+                        const cat_index = params.summary.findIndex(ca => ca.id == c);
+                        if(cat_index > -1) params.summary[cat_index].item_numbers.push(request.id);
+                        else params.summary.push({id: c, category_name: categories.find(ca => ca.id == c).name, item_numbers: [request.id]});
+                    });
+                }
                 params.requests.push(request);
             };
-            // console.log(params);
+            params.meetings = meetings;
+            console.log(params.summary);
             return res.render("reports", {params: params});
         });
     }

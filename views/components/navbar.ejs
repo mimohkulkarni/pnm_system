@@ -3,17 +3,22 @@
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
-        <a class="navbar-brand" href="./requests">PNM System</a>
+        <a class="navbar-brand" href="/requests">PNM System</a>
         <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-        <li class="nav-item active">
-            <a class="nav-link" href="./requests">Requests <span class="sr-only">(current)</span></a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="./users">Users</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="./meetings">Meetings</a>
-        </li>
+            <li class="nav-item <%- page == 'requests' ? 'active' : '' %>">
+                <a class="nav-link" href="./requests">Requests</a>
+            </li>
+            <li class="nav-item <%- page == 'meetings' ? 'active' : '' %>">
+                <a class="nav-link" href="./meetings">Meetings</a>
+            </li>
+            <% if(typeof user_level !== 'undefined' && user_level === 1){ %>
+                <li class="nav-item <%- page == 'users' ? 'active' : '' %>">
+                    <a class="nav-link" href="./users">Users</a>
+                </li>
+                <li class="nav-item <%- page == 'reports' ? 'active' : '' %>">
+                    <a class="nav-link" href="./reports">Reports</a>
+                </li>
+            <% } %>
         </ul>
         <div class="form-inline my-2 my-lg-0">
             <a href="/logout" class="btn btn-danger">

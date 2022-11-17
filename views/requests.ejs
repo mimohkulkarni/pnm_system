@@ -15,7 +15,7 @@
     <link href="/css/request.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <%- include('./components/navbar') -%>
+    <%- include('./components/navbar', {page: 'requests', user_level: params.user_level ? params.user_level : null}); %>
     <div class="container-fluid">
         <div class="table-responsive">
             <% if (params.add) { %>

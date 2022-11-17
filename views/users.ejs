@@ -17,7 +17,7 @@
     </script>
 </head>
 <body>
-    <%- include('./components/navbar') -%>
+    <%- include('./components/navbar', {page: "users", user_level: params.user_level ? params.user_level : null}) -%>
     <div class="container-fluid">
         <div class="table-responsive">
             <% if (params.add) { %>

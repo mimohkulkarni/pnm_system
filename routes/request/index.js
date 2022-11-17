@@ -33,6 +33,7 @@ route.get('/', async (req, res) => {
         params.categories = categories;
     }
     connection.query(requests_query,(err, result)=>{
+        console.log(err);
         if(err) return res.render("requests", {params: params});
         result.forEach(request => {
             request.created_at = new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString();
@@ -41,7 +42,7 @@ route.get('/', async (req, res) => {
             request.status = request.open === 0 ? "Closed" : request.category_id.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open"
             params.requests.push(request);
         });
-        // console.log(params);
+        console.log(params);
         return res.render('requests', {params: params});
     });
 });
@@ -202,7 +203,7 @@ route.get('/view/:id', (req, res) => {
         LEFT JOIN user us1 ON re.closed_by = us1.id 
         LEFT JOIN user us2 ON re.category_set_by = us2.id WHERE re.id = ?`;
     connection.query(select_sql, [req_id], async (err, result)=>{
-        if(err || !result){
+        if(err || !result[0]){
             console.log(err);
             params.queryError = true;
             return res.render("viewRequest", {params: params});
