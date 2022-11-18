@@ -1,23 +1,30 @@
-const level_5_paths = ['/requests','/requests/add','/requests/edit','/requests/view','/meetings'];
-const level_4_3_2_paths = ['/requests','/requests/view','/meetings'];
-const level_1_paths = [...level_4_3_2_paths,'/meetings/add','/meetings/edit',,'/reports','/meetings/users','/users'
-    ,'/users/add','/users/edit'];
+const public_paths = ['/requests','/meetings','/requests/view']
+const level_5_paths = [...public_paths,'/requests/add','/requests/edit','/requests/delete'];
+const level_1_paths = [...public_paths,'/requests/setCategory','/requests/close','/requests/forwardToNextMeeting',
+    '/requests/getCategoryUsers','/meetings/add','/meetings/edit','/meetings/createMeeting','/meetings/delete',
+    '/reports','/users','/users/edit',,'/users/add','/users/activate','/users/deactivate'];
+const level_2_paths = [...public_paths,'/requests/setApproval','/requests/getCategoryUsers'];
+const level_3_paths = [...public_paths,'/requests/addRemarks','/requests/forward'];
+const level_4_paths = [...public_paths,'/requests/addRemarks'];
 
 module.exports = (req, res, next) => {
     // req.session.user = {
     //     username: 1,
     //     level: 1
     // }
-    // const split_url = req.originalUrl.split("/");
-    // const url = split_url.length > 3 ? `/${split_url[1]}/${split_url[2]}` : req.originalUrl
+    const split_url = req.originalUrl.split("/");
+    let url = split_url.length > 3 ?  `/${split_url[1]}/${split_url[2]}` : req.originalUrl
+    if(url.includes("?")) url = url.split("?")[0];
     if(!req.session.user) return res.redirect("/");
     else{
-    //     if ((req.session.user?.level === 5 && level_5_paths.includes(url)) ||
-    //         ([2,3,4].includes(req.session.user?.level) && level_4_3_2_paths.includes(url)) || 
-    //         (req.session.user?.level === 1 && level_1_paths.includes(url))) {
+        if ((req.session.user?.level === 5 && level_5_paths.includes(url)) ||
+            (req.session.user?.level === 4 && level_4_paths.includes(url)) ||
+            (req.session.user?.level === 3 && level_3_paths.includes(url)) ||
+            (req.session.user?.level === 2 && level_2_paths.includes(url)) ||
+            (req.session.user?.level === 1 && level_1_paths.includes(url))) {
             return next();
-        // } else {
-        //     return res.render("401");
-        // }
+        } else {
+            return res.redirect("/401");
+        }
     }
 }

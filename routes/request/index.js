@@ -8,15 +8,26 @@ route.get('/', async (req, res) => {
         requests: [],
         add: false,
         edit: false,
+        delete: false,
         user_level: req.session.user.level
     }
     const requests_query = `SELECT re.id, re.title,re.description, re.created_at, re.category_id, re.approved, re.open, 
             re.union_id, CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")") AS created_by, re.meeting_id 
             FROM request re LEFT JOIN user us ON re.created_by = us.id 
             WHERE ${params.user_level !== 1 ? "re.open = 1" : "1"}
-            ${[3,4].includes(params.user_level) ? `AND re.category_id= '${req.session.user.category_id}' OR re.category_id LIKE '%,${req.session.user.category_id},%' 
-                OR re.category_id LIKE '%,${req.session.user.category_id}' OR re.category_id LIKE '${req.session.user.category_id},%' AND re.approved = 1 ${params.user_level === 3 ? `AND re.forwarded = 0` : "AND re.forwarded = 1"}` : 
-                params.user_level === 2 ? "AND re.approved = 0" : params.user_level === 5 ? "AND re.union_id = us.union_id" : ""} ORDER BY re.id DESC`;
+            ${[3,4].includes(params.user_level) 
+                ? `AND re.category_id= '${req.session.user.category_id}' OR re.category_id LIKE '%,${req.session.user.category_id},%' 
+                    OR re.category_id LIKE '%,${req.session.user.category_id}' OR re.category_id LIKE '${req.session.user.category_id},%' 
+                    AND re.approved = 1 
+                    ${params.user_level === 3 
+                    ? `AND re.forwarded = 0` 
+                    : `AND (re.forwarded = 1 OR re.sent_to = '${req.session.user.username}' OR 
+                        re.sent_to LIKE '%,${req.session.user.username},%' OR re.sent_to LIKE '%,${req.session.user.username}' 
+                        OR re.sent_to LIKE '${req.session.user.username},%')`
+                    }` 
+                : params.user_level === 2 
+                    ? "AND re.approved = 0" 
+                    : params.user_level === 5 ? "AND re.union_id = us.union_id" : ""} ORDER BY re.id DESC`;
     // console.log(requests_query);
     if(req.session.addRequest){
         params.add = true;
@@ -26,6 +37,10 @@ route.get('/', async (req, res) => {
         params.edit = true;
         req.session.editRequest = false;
     }
+    if(req.session.deleteRequest){
+        params.delete = true;
+        req.session.deleteRequest = false;
+    }
     const meetings = await connection.query("SELECT * FROM meeting ORDER BY id DESC");
     params.meetings = meetings;
     if([1,2].includes(params.user_level)){
@@ -33,7 +48,6 @@ route.get('/', async (req, res) => {
         params.categories = categories;
     }
     connection.query(requests_query,(err, result)=>{
-        console.log(err);
         if(err) return res.render("requests", {params: params});
         result.forEach(request => {
             request.created_at = new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString();
@@ -42,7 +56,7 @@ route.get('/', async (req, res) => {
             request.status = request.open === 0 ? "Closed" : request.category_id.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open"
             params.requests.push(request);
         });
-        console.log(params);
+        // console.log(params);
         return res.render('requests', {params: params});
     });
 });
@@ -170,7 +184,8 @@ route.get("/delete/:id", async(req, res) => {
 
     if(id){
         const delete_sql = "DELETE FROM `request` WHERE `id` = ?";
-        await connection.query(delete_sql, [id])
+        await connection.query(delete_sql, [id]);
+        req.session.deleteRequest = true;
         return res.redirect("/requests");
     }
     else res.redirect("/requests");
@@ -181,7 +196,8 @@ route.get('/view/:id', (req, res) => {
     let params = {
         queryError: false,
         closed: false,
-        user_level: req.session.user.level
+        user_level: req.session.user.level,
+        sent_to: []
     }
 
     if(req.session.queryError){
@@ -194,7 +210,8 @@ route.get('/view/:id', (req, res) => {
     }
 
     const req_id = req.params.id;
-    const select_sql = `SELECT re.id, re.title, re.description, re.created_at, re.closed_at, re.category_id, re.open,
+    const select_sql = `SELECT re.id, re.title, re.description, re.created_at, re.closed_at, re.category_id, re.open, 
+        re.sent_to as sent_user,
         CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")") AS created_by, re.approved, re.forwarded,
         CONCAT(us1.first_name, " ", us1.last_name, " (", us.emp_no, ")") AS closed_by, me.name as meeting_name,
         CONCAT(us2.first_name, " ", us2.last_name, " (", us.emp_no, ")") AS category_set_by, me.id as meeting_id
@@ -212,8 +229,15 @@ route.get('/view/:id', (req, res) => {
             params.closed = true;
             // return res.render("viewRequest", {params: params});
         }
+        if(result[0].sent_user && result[0].sent_user.split(",").length > 0){
+            for (const user_id of result[0].sent_user.split(",")) {
+                const user = await connection.query(`SELECT id, CONCAT(first_name, " ", last_name, " (", emp_no, ")") AS name
+                    FROM user WHERE id = ?`, [user_id])
+                params.sent_to.push(user[0]);
+            }
+        }
         const remarks = await connection.query(`SELECT re.created_by, re.created_at, re.remark, us.level,
-            CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")"), us.level AS remarked_by
+            CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")") as name, us.level AS remarked_by
             FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [req_id])
         const categories = await connection.query("SELECT * FROM categories");        
         if(params.user_level === 1){
@@ -240,40 +264,59 @@ route.get('/view/:id', (req, res) => {
     });
 });
 
+route.get("/getCategoryUsers",async (req, res) => {
+    const ids = req.query.id ? req.query.id.split(",") : [];
+    if(ids.length > 0){
+        const users = [];
+        for (const id of ids) {
+            const update_sql = `SELECT id, CONCAT(first_name, " ", last_name, " (", emp_no, ")") as name FROM user WHERE category_id = ?`;
+            const user = await connection.query(update_sql, [ id ]);
+            if(user && user.length === 1) users.push(user);
+            else if(user && user.length > 1) user.forEach(u => users.push(u));
+        }
+        res.end(JSON.stringify(users));
+    }
+});
+
 route.post("/setCategory",(req, res) => {
-    const ids = JSON.parse(req.body.ids);
-    const category_ids = JSON.parse(req.body.categories);
-    if(ids.length > 0 && category_ids.length > 0){
-        ids.forEach((id,i) => {
-            const update_sql = "UPDATE `request` SET `category_id` = ?, `category_set_by` = ? WHERE `id` = ?"
-            // connection.query(update_sql, [category_id, req.session?.user?.username, id], (err, result, fields) => {
-            connection.query(update_sql, [category_ids[i].join(","), 1, id], (err, result) => {
-                if(!err) req.session.editRequest = true;
-                else req.session.queryError = true;
-            });    
+    const id = req.body.id;
+    const category_ids = req.body.categories ? req.body.categories.split(",") : [];
+    const user_ids = req.body.users ? req.body.users.split(",") : [];
+    if(id && category_ids.length > 0 && user_ids.length > 0){
+        const update_sql = "UPDATE `request` SET `category_id` = ?, `category_set_by` = ?, `sent_to` = ? WHERE `id` = ?"
+        // connection.query(update_sql, [category_id, req.session?.user?.username, id], (err, result, fields) => {
+        connection.query(update_sql, [category_ids.join(","), 1, user_ids.join(","), id], (err, result) => {
+            if(!err) req.session.editRequest = true;
+            else req.session.queryError = true;
         });
         res.redirect("/requests");
     }
 });
 
 route.post("/setApproval",async (req, res) => {
-    const ids = JSON.parse(req.body.ids);
-    const category_ids = JSON.parse(req.body.categories);
+    const id = req.body.id;
+    const category_ids = req.body.categories ? req.body.categories.split(",") : [];
+    const user_ids = req.body.users ? req.body.users.split(",") : [];
     const remarks = req.body.remarks;
     const approval = parseInt(req.body.approval);
-    if(ids.length > 0 && category_ids.length > 0 && req.session.user.level === 2){
-        ids.forEach(async (id,i) => {
-            const update_sql = `UPDATE request SET category_id = ?, category_set_by = ?, approved = ? WHERE id = ?`;
-            await connection.query(update_sql, [category_ids[i].join(","), req.session.user.username, approval === 1 || approval !== 3 ? 0 : 1, id], (err, result) => {
-                if(!err) req.session.editRequest = true;
-                else req.session.queryError = true;
-            });
+    if(id && category_ids.length > 0 && user_ids.length > 0){
+        console.log("here1");
+        const update_sql = `UPDATE request SET category_id = ?, category_set_by = ?, sent_to = ?, approved = ? WHERE id = ?`;
+        await connection.query(update_sql, [category_ids.join(","), req.session.user.username, user_ids.join(","), approval === 1 || approval !== 3 ? 0 : 1, id], 
+            async (err, result) => {
+            console.log("here2");
+            if(err){
+                req.session.queryError = true;
+                return res.redirect("/requests");
+            } 
+            req.session.editRequest = true;
+            if(remarks){
+                console.log("here3");
+                const insert_sql = `INSERT INTO remarks(request_id, created_by, created_at, remark) VALUES (?,?,now(),?)`;
+                await connection.query(insert_sql, [ids[0], req.session.user.username, remarks ? remarks : ""])
+            }
+            return res.redirect("/requests");
         });
-        if(remarks){
-            const insert_sql = `INSERT INTO remarks(request_id, created_by, created_at, remark) VALUES (?,?,now(),?)`;
-            await connection.query(insert_sql, [ids[0], req.session.user.username, remarks ? remarks : ""])
-        }
-        res.redirect("/requests");
     }
     else return res.redirect("/requests");
 });

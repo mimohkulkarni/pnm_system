@@ -96,6 +96,16 @@
                      </select>
                   </div>
                </div>
+               <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
+                  <div class="request-card">
+                     <b>Send To</b>
+                     <select class="selectpicker w-100" multiple name="sentTo" id="sentTo">
+                        <% params.sent_to.forEach(user => { %>
+                           <option value="<%= user.id %>" selected><%= user.name %></option>
+                        <% }) %>
+                     </select>
+                  </div>
+               </div>
             <% } %>
             <% if(params.level_2_remarks.length > 0) { %> 
                <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
@@ -266,8 +276,9 @@
          $("#btn_reject,#btn_submit").click(function() {
             const form = $('<form method="post"></form>').prop("action", user_level === 1 ? '/requests/setCategory' : user_level === 2 ? '/requests/setApproval' : "/requests/addRemarks");
             if([1,2].includes(user_level)){
-               form.append($("<input>").attr("type", "hidden").attr("name", "ids").val(JSON.stringify([req_id])));
-               form.append($("<input>").attr("type", "hidden").attr("name", "categories").val(JSON.stringify([$("#category").selectpicker('val')])));
+               form.append($("<input>").attr("type", "hidden").attr("name", "id").val(req_id));
+               form.append($("<input>").attr("type", "hidden").attr("name", "categories").val($("#category").selectpicker('val')));
+               form.append($("<input>").attr("type", "hidden").attr("name", "users").val($('#sentTo').selectpicker('val')));
                form.append($("<input>").attr("type", "hidden").attr("name", "remarks").val($("#remarks").val()));
                if(user_level === 2)
                   form.append($("<input>").attr("type", "hidden").attr("name", "approval").val(parseInt($(this).data("type"))));
@@ -316,8 +327,25 @@
          });
 
          $('#category').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
-            if($(this).selectpicker("val").length > 0) $("#btn_div").show();
-            else $("#btn_div").hide();
+            if($(this).selectpicker("val").length > 0){
+               fetch(`/requests/getCategoryUsers?id=${$(this).selectpicker("val")}`).then(res => res.json()).then(res => {
+                  const val = $('#sentTo').selectpicker('val');
+                  $('#sentTo').selectpicker('destroy');
+                  $('#sentTo').empty();
+                  console.log(res);
+                  if(res.length > 0)
+                     res.forEach(user => user && $('#sentTo').append(`<option value='${user.id}'>${user.name}</option>`));
+                  else $('#sentTo').append(`<option disabled>No Users Found</option>`);
+                  $('#sentTo').selectpicker('refresh');
+                  $('#sentTo').selectpicker('val', val);
+               })
+               $("#btn_div").show();
+            } 
+            else{
+               $('#sentTo').empty();
+               $('#sentTo').selectpicker('refresh');
+               $("#btn_div").hide();
+            } 
          });
          
          $("#btn_print").on("click", function() {

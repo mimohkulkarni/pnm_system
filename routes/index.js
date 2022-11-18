@@ -11,8 +11,12 @@ route.get('/', async (req, res) => {
     res.redirect('/login');
 });
 
+route.get('/401', async (req, res) => {
+    res.render('401');
+});
+
 route.get('/logout', async (req, res) => {
-    req.session.destroy();
+    req.session = null;
     res.redirect('/login');
 });
   
