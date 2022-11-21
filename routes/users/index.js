@@ -61,7 +61,7 @@ route.post('/add', async (req, res) => {
     if(first_name && last_name && emp_no && mob_no && mob_no.length === 10 && level && 
         ([1,2,5].includes(level) || ([3,4].includes(level) && category))){
         const insert_sql = `INSERT INTO user(emp_no, first_name, last_name, mobile_no, password, password_change, level 
-            ${[3,4].includes(level) ? ",category_id" : ""} VALUES (?,?,?,?,'pass123',1,?${[3,4].includes(level) ? `,${category}` : ""})`;
+            ${[3,4].includes(level) ? ",category_id" : ""} VALUES (?,?,?,?,'pass123',1,?,${[3,4].includes(level) ? `,${category}` : ""})`;
         connection.query(insert_sql, [emp_no,first_name,last_name,level], async (err, result)=>{
             if(err){
                 console.log(err);
