@@ -51,7 +51,7 @@ route.post('/', async (req, res) => {
                 request.category_names = request.category_id ? String(request.category_id).split(",").map(c => categories.find(ca => ca.id == c).name) : [];
                 request.created_at = new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString();
                 request.closed_at = request.closed_at ? new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString() : null;
-                request.status = request.open === 0 ? "Closed" : request.category_ids.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
+                request.status = request.open === 0 ? "Closed" : request.category_ids.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_ids.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
                 if(request.category_id){
                     request.category_id.split(",").forEach(c => {
                         const cat_index = params.summary.findIndex(ca => ca.id == c);
