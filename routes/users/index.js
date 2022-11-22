@@ -87,7 +87,7 @@ route.post('/add', async (req, res) => {
         params.categories = categories;    
         res.render("addUser", {params: params});
     }
-    res.render('addUsers',{params: params});
+    res.render('addUser',{params: params});
 });
 
 route.get('/edit/:id', async (req, res) => {
@@ -164,7 +164,7 @@ route.post('/edit', async (req, res) => {
         params.categories = categories;    
         res.render("addUser", {params: params});
     }
-    res.render('addUsers',{params: params});
+    res.render('addUser',{params: params});
 });
 
 exports = module.exports = route

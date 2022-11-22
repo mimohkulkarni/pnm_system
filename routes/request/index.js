@@ -300,25 +300,22 @@ route.post("/setApproval",async (req, res) => {
     const remarks = req.body.remarks;
     const approval = parseInt(req.body.approval);
     if(id && category_ids.length > 0 && user_ids.length > 0){
-        console.log("here1");
         const update_sql = `UPDATE request SET category_id = ?, category_set_by = ?, sent_to = ?, approved = ? WHERE id = ?`;
         await connection.query(update_sql, [category_ids.join(","), req.session.user.username, user_ids.join(","), approval === 1 || approval !== 3 ? 0 : 1, id], 
             async (err, result) => {
-            console.log("here2");
             if(err){
                 req.session.queryError = true;
                 return res.redirect("/requests");
             } 
             req.session.editRequest = true;
             if(remarks){
-                console.log("here3");
                 const insert_sql = `INSERT INTO remarks(request_id, created_by, created_at, remark) VALUES (?,?,now(),?)`;
-                await connection.query(insert_sql, [ids[0], req.session.user.username, remarks ? remarks : ""])
+                await connection.query(insert_sql, [id, req.session.user.username, remarks ? remarks : ""])
             }
             return res.redirect("/requests");
         });
     }
-    else return res.redirect("/requests");
+    else return res.redirect("/viewRequest/"+id);
 });
 
 route.post("/addRemarks", async (req, res) => {
