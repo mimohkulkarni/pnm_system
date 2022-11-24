@@ -1,7 +1,7 @@
 const public_paths = ['/requests','/meetings','/requests/view']
 const level_5_paths = [...public_paths,'/requests/add','/requests/edit','/requests/delete'];
 const level_1_paths = [...public_paths,'/requests/setCategory','/requests/close','/requests/forwardToNextMeeting',
-    '/requests/getCategoryUsers','/meetings/add','/meetings/edit','/meetings/createMeeting','/meetings/delete',
+    '/requests/getCategoryUsers','/meetings/add','/meetings/edit','/meetings/delete',
     '/reports','/users','/users/edit',,'/users/add','/users/activate','/users/deactivate'];
 const level_2_paths = [...public_paths,'/requests/setApproval','/requests/getCategoryUsers'];
 const level_3_paths = [...public_paths,'/requests/addRemarks','/requests/forward'];
