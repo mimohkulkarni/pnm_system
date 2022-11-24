@@ -169,6 +169,19 @@
                <strong>Please enter valid remarks.</strong>
                </div>
          </div>
+         <% if (params.filepath) { %>
+            <% if([".png",".jpeg",".jpg"].includes(params.filetype)) { %>
+               <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
+                  <div class="request-card">
+                     <b>Attachments</b>
+                     <img class="img-responsive my-3 ml-3" style="cursor: pointer;" width="100" src="../../<%= params.filepath %>"
+                        alt="request_image" data-toggle="modal" data-target="#imageModal" />
+                  </div>
+               </div>
+            <% } else{ %>
+               <a class="btn btn-primary my-3 ml-3" href="../../<%= params.filepath %>" data-toggle="modal" data-target="#imageModal">View Attachment</a>
+            <% } %>
+         <% } %>            
          <% if (params.queryError) { %>
             <div class="col-12">
                <div class="alert alert-danger mt-4 w-100" role="alert">
@@ -218,36 +231,21 @@
             </div>
          <% } %>
       </div>
-   <% if (params.user_level === 1) { %>
-      <div class="modal" tabindex="-1" id="meeting_modal">
-            <div class="modal-dialog modal-lg">
-               <div class="modal-content">
-                  <form action="/requests/createMeeting" method="post">
-                        <div class="modal-header">
-                           <h5 class="modal-title">Forward Request To Next Meeting</h5>
-                           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                           </button>
-                        </div>
-                        <div class="modal-body">
-                        <div class="form-field">
-                           <select id="meeting_id" class="form-control">
-                              <option selected>Select Meeting</option>
-                              <% params.meetings.forEach(meeting => { %>
-                                 <option value="<%= meeting.id %>"><%= meeting.name %></option>
-                              <% }) %>
-                           </select>
-                        </div>
-                        </div>
-                        <div class="modal-footer">
-                           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                           <button type="button" class="btn btn-warning" id="btn_forward_meet">Forward</button>
-                        </div>
-                  </form>
-               </div>
-            </div>
+      <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+         <div class="modal-dialog modal-lg">
+           <div class="modal-content">
+             <div class="modal-header">
+               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                 <span aria-hidden="true">&times;</span>
+               </button>
+             </div>
+             <div class="modal-body">
+               <img src="" class="img-reponsive" width="100%" height="100%" id="imageModalImg" alt="request_image" style="display: none;"/>
+               <iframe id="imageModalIframe" width="100%" height="500px" title="Document" src="" style="display: none;"></iframe>
+             </div>
+           </div>
          </div>
-      <% } %>
+      </div>
    </div>
    <script>
       $(document).ready(function(){
@@ -257,12 +255,13 @@
          const req_id = <%- parseInt(params.id) %>;
          const remarksError = <%- params.remarksError ? params.remarksError : "null" %>;
          const level_4_remarks_given = <%- params.level_4_remarks.length > 0 ? "true" : "false" %>;
+         const fileType = <%- params.filetype ? JSON.stringify(params.filetype) : "null" %>;
 
          if(remarksError) $("#remarksErrorDiv").show();
 
          if(!approved && user_level === 1) $("#btn_div").show();
          else if(!approved && !category_names && user_level === 1) $("#btn_div").hide();
-         else if(!approved && category_names.length > 0 && user_level === 2){
+         else if(!approved && category_names && category_names.length > 0 && user_level === 2){
             $("#btn_div").show();
             $("#btn_submit").text("Approve");
             $("#btn_reject").show();
@@ -369,6 +368,21 @@
             $(this).show();
             $("#level_1_btn_div").show();
             $("#btn_div").show();
+         });
+
+         $('#imageModal').on('show.bs.modal', function (event) {
+            const button = $(event.relatedTarget);
+            const src = button.prop('src') ? button.prop('src') : button.prop("href");
+            if(src && fileType){
+               if([".png",".jpeg",".jpg"].includes(fileType)){
+                  $("#imageModalImg").show();
+                  $("#imageModalImg").prop("src",src);
+               }
+               else{
+                  $("#imageModalIframe").show();
+                  $("#imageModalIframe").prop("src",`https://drive.google.com/viewerng/viewer?embedded=true&url=${src}`);
+               }
+            }
          });
       });
    </script>

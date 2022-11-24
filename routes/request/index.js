@@ -88,7 +88,7 @@ route.post("/add", fileUpload({createParentPath: true}), async (req, res) => {
         let filePath = null
         if(file){
             const filename = file.name.replace(/\s+/g, "_").replace(/\s+/g, "_").split(".");
-            filePath = path.join("files", `${filename[0]}${new Date().getTime()}.${filename[1]}`);
+            filePath = path.join("public","files", `${filename[0]}${new Date().getTime()}.${filename[1]}`);
             console.log(filePath);
             file.mv(filePath, err => {
                 if(err) res.redirect("/requests/add");
@@ -217,7 +217,7 @@ route.get('/view/:id', (req, res) => {
 
     const req_id = req.params.id;
     const select_sql = `SELECT re.id, re.title, re.description, re.created_at, re.closed_at, re.category_id, re.open, 
-        re.sent_to as sent_user,
+        re.sent_to as sent_user, re.filepath,
         CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.approved, re.forwarded,
         CONCAT(us1.first_name, " ", us1.last_name, " (", us.designation, ")") AS closed_by, me.name as meeting_name,
         CONCAT(us2.first_name, " ", us2.last_name, " (", us.designation, ")") AS category_set_by, me.id as meeting_id
@@ -245,7 +245,7 @@ route.get('/view/:id', (req, res) => {
         const remarks = await connection.query(`SELECT re.created_by, re.created_at, re.remark, us.level,
             CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") as name, us.level AS remarked_by
             FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [req_id])
-        const categories = await connection.query("SELECT * FROM categories");        
+        const categories = await connection.query("SELECT * FROM categories");
         if(params.user_level === 1){
             const meetings = await connection.query("SELECT id, name FROM meeting WHERE union_id = ?",[req.session.user.union_id]);
             params.meetings = meetings.filter(me => me.id !== result[0].meeting_id);
@@ -256,6 +256,8 @@ route.get('/view/:id', (req, res) => {
             created_at : new Date(result[0].created_at).toLocaleDateString() + " " + new Date(result[0].created_at).toLocaleTimeString(),
             closed_at: result[0].closed_at ? new Date(result[0].closed_at).toLocaleDateString() + " " + new Date(result[0].closed_at).toLocaleTimeString() : null,
             categories: categories,
+            filepath: result[0].filepath,
+            filetype: result[0].filepath ? path.extname(result[0].filepath) : null,
             level_2_remarks: remarks.filter(re => parseInt(re.level) === 2),
             level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),
             level_4_remarks: remarks.filter(re => parseInt(re.level) === 4),
