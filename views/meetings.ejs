@@ -188,7 +188,7 @@
     <% } %>
     <script>        
       $(document).ready(function(){
-        const meetings = <%- params.meetings.length > 0 ? JSON.stringify(params.meetings) : [] %>;
+        const meetings = <%- params.meetings.length > 0 ? JSON.stringify(params.meetings) : JSON.stringify([]) %>;
         let meeting_id = null;
         
         $(".btn_edit_meeting").on('click',function() {

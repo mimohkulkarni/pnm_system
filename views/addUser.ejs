@@ -95,8 +95,8 @@
           <div class="form-field col-lg-12 mt-5">
            <select name="union" class="form-control" type="text" value='<%- params.union_id ? params.union_id : "" %>'>
              <option value="0" selected>Select Union</option>
-             <option value="1" <%- params.union_id == '1' ? "selected" : "" %>>CRMS</option>
-             <option value="2" <%- params.union_id == '2' ? "selected" : "" %>>NRMU</option>
+             <option value="1" <%- params.union_id == '1' ? "selected" : "" %>>NRMU</option>
+             <option value="2" <%- params.union_id == '2' ? "selected" : "" %>>CRMS</option>
            </select>
           </div>
           <% if (params.unionError) { %>
