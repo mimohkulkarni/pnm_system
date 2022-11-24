@@ -7,7 +7,7 @@ route.get('/', async(req, res) => {
         user_level: req.session.user.level
     }
     await connection.query(`SELECT me.id, me.name, me.meeting_date, me.union_id,
-        CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")") as created_by 
+        CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") as created_by 
         FROM meeting me LEFT JOIN user us ON me.created_by = us.id`, async (err, result) => {
         if(err){
             params.queryError = true;

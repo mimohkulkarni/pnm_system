@@ -1,7 +1,9 @@
 const route = require('express').Router()
 const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 const connection = require('../../connection');
 const urlencodedParser = bodyParser.urlencoded({extended: false});
+const path = require('path');
 
 route.get('/', async (req, res) => {
     const params = {
@@ -12,7 +14,7 @@ route.get('/', async (req, res) => {
         user_level: req.session.user.level
     }
     const requests_query = `SELECT re.id, re.title,re.description, re.created_at, re.category_id, re.approved, re.open, 
-            re.union_id, CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")") AS created_by, re.meeting_id 
+            re.union_id, CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.meeting_id 
             FROM request re LEFT JOIN user us ON re.created_by = us.id 
             WHERE ${params.user_level !== 1 ? "re.open = 1" : "1"}
             ${[3,4].includes(params.user_level) 
@@ -67,10 +69,11 @@ route.get("/add", async (req, res) => {
     res.render("addRequest", {params: {meetings: meetings}});
 });
 
-route.post("/add", urlencodedParser, async (req, res) => {
+route.post("/add", fileUpload({createParentPath: true}), async (req, res) => {
     const title = req.body.title;
     const desc = req.body.description;
     const meeting = parseInt(req.body.meeting);
+    const file = req.files ? req.files.file : null;
 
     const params = {
         titleError: false,
@@ -82,15 +85,21 @@ route.post("/add", urlencodedParser, async (req, res) => {
     }
 
     if(title && desc && meeting){
-        const insert_sql = "INSERT INTO `request`(`title`, `description`, `meeting_id`, `union_id`, `created_by`, `created_at`) VALUES (?,?,?,?,?,now())";
+        let filePath = null
+        if(file){
+            const filename = file.name.replace(/\s+/g, "_").replace(/\s+/g, "_").split(".");
+            filePath = path.join("files", `${filename[0]}${new Date().getTime()}.${filename[1]}`);
+            console.log(filePath);
+            file.mv(filePath, err => {
+                if(err) res.redirect("/requests/add");
+            });
+        }
+        const insert_sql = `INSERT INTO request(title, description, meeting_id, union_id, created_by, created_at ${file ? ", filepath" : ""}) VALUES (?,?,?,?,?,now()${file ? `,${JSON.stringify(filePath)}` : ""})`;
         connection.query(insert_sql, [title, desc, meeting, req.session.user.union_id, req.session.user.username], async (err, result)=>{
             if(err){
                 console.log(err);
                 params.queryError = true;
-                const curr_date = new Date();
-                const meetings = await connection.query("SELECT id, name, meeting_date FROM meeting WHERE meeting_date >= ? AND union_id = ?",[curr_date.toLocaleDateString(), req.session.user.union_id]);
-                params.meetings = meetings;
-                res.render("addRequest", {params: params});
+                res.end(JSON.stringify(params));
             }
             else{
                 req.session.addRequest = true;
@@ -101,12 +110,8 @@ route.post("/add", urlencodedParser, async (req, res) => {
     else{
         if(!title) params.titleError = true;
         if(!meeting) params.meetingError = true;
-        else params.descError = true;
-        const curr_date = new Date();
-        const meetings = await connection.query("SELECT id, name, meeting_date FROM meeting WHERE meeting_date >= ? AND union_id = ?",[curr_date.toLocaleDateString(), req.session.user.union_id]);
-        params.meetings = meetings;
-        
-        res.render("addRequest", {params: params});
+        if(!desc) params.descError = true;
+        res.end(JSON.stringify(params));
     }
 });
 
@@ -121,7 +126,7 @@ route.get('/edit/:id', (req, res) => {
     }
 
     const req_id = req.params.id;
-    const select_sql = "SELECT `id`, `title`, `description`, `meeting_id` FROM `request` WHERE `id` = ?";
+    const select_sql = "SELECT `id`, `title`, `description`, `meeting_id`, `filepath` FROM `request` WHERE `id` = ?";
     connection.query(select_sql, [req_id], async (err, result)=>{
         if(err){
             params.queryError = true;
@@ -133,6 +138,7 @@ route.get('/edit/:id', (req, res) => {
         params.title = result[0].title;
         params.desc = result[0].description;
         params.meeting_id = result[0].meeting_id;
+        params.filepath = result[0].filepath;
         params.meetings = meetings;
         // console.log(params);
         return res.render("addRequest", {params: params});
@@ -160,7 +166,7 @@ route.post("/edit", urlencodedParser, (req, res) => {
         const update_sql = "UPDATE `request` SET `title`= ?, `description`= ?, meeting_id = ? WHERE `id` = ?";
         connection.query(update_sql, [title, desc, meeting_id, id], (err, result)=>{
             if(err){
-                console.log(err);
+                // console.log(err);
                 params.queryError = true;
                 res.render("addRequest", {params: params});
             }
@@ -212,16 +218,16 @@ route.get('/view/:id', (req, res) => {
     const req_id = req.params.id;
     const select_sql = `SELECT re.id, re.title, re.description, re.created_at, re.closed_at, re.category_id, re.open, 
         re.sent_to as sent_user,
-        CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")") AS created_by, re.approved, re.forwarded,
-        CONCAT(us1.first_name, " ", us1.last_name, " (", us.emp_no, ")") AS closed_by, me.name as meeting_name,
-        CONCAT(us2.first_name, " ", us2.last_name, " (", us.emp_no, ")") AS category_set_by, me.id as meeting_id
+        CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.approved, re.forwarded,
+        CONCAT(us1.first_name, " ", us1.last_name, " (", us.designation, ")") AS closed_by, me.name as meeting_name,
+        CONCAT(us2.first_name, " ", us2.last_name, " (", us.designation, ")") AS category_set_by, me.id as meeting_id
         FROM request re LEFT JOIN user us ON re.created_by = us.id
         LEFT JOIN meeting me ON re.meeting_id = me.id 
         LEFT JOIN user us1 ON re.closed_by = us1.id 
         LEFT JOIN user us2 ON re.category_set_by = us2.id WHERE re.id = ?`;
     connection.query(select_sql, [req_id], async (err, result)=>{
         if(err || !result[0]){
-            console.log(err);
+            // console.log(err);
             params.queryError = true;
             return res.render("viewRequest", {params: params});
         }
@@ -231,13 +237,13 @@ route.get('/view/:id', (req, res) => {
         }
         if(result[0].sent_user && result[0].sent_user.split(",").length > 0){
             for (const user_id of result[0].sent_user.split(",")) {
-                const user = await connection.query(`SELECT id, CONCAT(first_name, " ", last_name, " (", emp_no, ")") AS name
+                const user = await connection.query(`SELECT id, CONCAT(first_name, " ", last_name, " (", designation, ")") AS name
                     FROM user WHERE id = ?`, [user_id])
                 params.sent_to.push(user[0]);
             }
         }
         const remarks = await connection.query(`SELECT re.created_by, re.created_at, re.remark, us.level,
-            CONCAT(us.first_name, " ", us.last_name, " (", us.emp_no, ")") as name, us.level AS remarked_by
+            CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") as name, us.level AS remarked_by
             FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [req_id])
         const categories = await connection.query("SELECT * FROM categories");        
         if(params.user_level === 1){
@@ -269,7 +275,7 @@ route.get("/getCategoryUsers",async (req, res) => {
     if(ids.length > 0){
         const users = [];
         for (const id of ids) {
-            const update_sql = `SELECT id, CONCAT(first_name, " ", last_name, " (", emp_no, ")") as name FROM user WHERE category_id = ?`;
+            const update_sql = `SELECT id, CONCAT(first_name, " ", last_name, " (", designation, ")") as name FROM user WHERE category_id = ?`;
             const user = await connection.query(update_sql, [ id ]);
             if(user && user.length === 1) users.push(user);
             else if(user && user.length > 1) user.forEach(u => users.push(u));
@@ -324,14 +330,13 @@ route.post("/addRemarks", async (req, res) => {
     if(id && remarks){
         const update_sql = `UPDATE request SET forwarded = ? WHERE id = ?`;
         await connection.query(update_sql, [0, id], async (err, result) => {
-            // console.log(err);
             if(err) {
                 req.session.queryError = true;
                 return res.redirect("/requests");
             }
             const insert_sql = `INSERT INTO remarks(request_id, created_by, created_at, remark) VALUES (?,?,now(),?)`;
             await connection.query(insert_sql, [id, req.session.user.username, remarks], (err, result) => {
-                console.log(err);
+                // console.log(err);
                 if(err) req.session.queryError = true;
                 else req.session.editRequest = true;
                 return res.redirect("/requests");
@@ -377,7 +382,7 @@ route.post("/close", async (req, res) => {
             }
             const insert_sql = `INSERT INTO remarks(request_id, meeting_remaks, created_by, created_at, remark) VALUES (?,?,?,now(),?)`;
             await connection.query(insert_sql, [id, 1, req.session.user.username, remarks], (err, result) => {
-                console.log(err);
+                // console.log(err);
                 if(err) req.session.queryError = true;
                 else req.session.editRequest = true;
                 return res.redirect("/requests");
@@ -390,11 +395,11 @@ route.post("/close", async (req, res) => {
 route.post("/forwardToNextMeeting", async (req, res) => {
     const meeting_id = req.body.meeting_id;
     const req_id = req.body.id;
-    console.log(req.body);
+    
     if(meeting_id && req_id){
         const insert_sql = `UPDATE request SET meeting_id = ? WHERE id = ?`;
         await connection.query(insert_sql, [meeting_id, req_id], async (err, result) => {
-            console.log(err);
+            // console.log(err);
             if(err) req.session.queryError = true;
             else req.session.meetingRequest = true;
             res.redirect("/requests");

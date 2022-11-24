@@ -256,6 +256,7 @@
          const approved = <%- parseInt(params.user_level) === 0 %>; 
          const req_id = <%- parseInt(params.id) %>;
          const remarksError = <%- params.remarksError ? params.remarksError : "null" %>;
+         const level_4_remarks_given = <%- params.level_4_remarks.length > 0 ? "true" : "false" %>;
 
          if(remarksError) $("#remarksErrorDiv").show();
 
@@ -268,7 +269,8 @@
          } 
          else if(!approved && category_names && [3,4].includes(user_level)){
             $("#btn_div").show();
-            $("#btn_submit").text("Approve For Close");
+            if(!level_4_remarks_given) $("#btn_submit").text("Approve For Close");
+            else $("#btn_submit").text("Add new Remarks");
             if(user_level === 3) $("#btn_forward").show();
          } 
          else $("#btn_div").remove();

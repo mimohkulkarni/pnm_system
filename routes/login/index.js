@@ -63,12 +63,10 @@ route.post("/changePassword", (req,res) => {
         id: id,
         queryError: false
     }
-    console.log(req.body);
     
     if(id && password){
         const login_query = `UPDATE user SET password = ?, password_change = ? WHERE id = ?`;
         connection.query(login_query, [password, 0, id], (err, result) => {
-            console.log();
             if(err){
                 params.queryError = true;
                 return res.render('login',{params:params});

@@ -17,7 +17,7 @@
     <h1 class="titleh1">
        <%- params.id ? "Edit User" : "Create User" %>
     </h1>
-    <form class="contact-form row" action="./<%- params.id ? 'edit' : 'add' %>" method="post">
+    <form class="contact-form row" action="<%- params.id ? '../edit' : './add' %>" method="post">
        <% if(params.id) { %>
           <input name="id" type="hidden" value='<%= params.id %>' />
        <% } %>
@@ -49,6 +49,15 @@
          </div>
        <% } %>
        <div class="form-field col-lg-12 mt-5">
+         <input name="designation" class="input-text js-input" type="text" value='<%- params.designation ? params.designation : "" %>' required>
+         <label class="label" for="designation">Employee Designation<span class="required">*</span></label>
+       </div>
+       <% if (params.desigError) { %>
+         <div class="alert alert-danger mt-2 w-100" role="alert">
+           <strong>Invalid designation</strong>
+         </div>
+       <% } %>
+       <div class="form-field col-lg-12 mt-5">
          <input name="mob_no" class="input-text js-input" type="number" value='<%- params.mob_no ? params.mob_no : "" %>' required>
          <label class="label" for="mob_no">Mobile Number<span class="required">*</span></label>
        </div>
@@ -59,8 +68,8 @@
        <% } %>
        <div class="form-field col-lg-12 mt-5">
          <select name="level" id="levelSelect" class="form-control">
-           <option selected>Select Designation</option>
-           <option value="1" <%- params.level == 1 ? "selected" : "" %>>Chief OS</option>
+           <option selected>Select Employee Level</option>
+           <option value="1" <%- params.level == 1 ? "selected" : "" %>>Chief OS / CSWI / DBA</option>
            <option value="2" <%- params.level == 2 ? "selected" : "" %>>DPO</option>
            <option value="3" <%- params.level == 3 ? "selected" : "" %>>BO</option>
            <option value="4" <%- params.level == 4 ? "selected" : "" %>>OS</option>
@@ -69,8 +78,8 @@
        </div>
        <div id="category_div" style="display: none;" class="w-100">
          <div class="form-field col-lg-12 mt-5">
-           <select name="category" class="form-control" type="text" value='<%- params.category ? params.category : "" %>'>
-             <option selected>Select Category</option>
+           <select name="category" class="form-control" type="text" value='<%- params.category ? params.category : "" %>' id="categorySelect">
+             <option value="0" selected>Select Category</option>
              <% params.categories.forEach(category => { %>
                <option value="<%= category.id %>" <%- params.category_id == category.id ? "selected" : "" %>><%= category.name %></option>
             <% }) %>
@@ -81,7 +90,21 @@
              <strong>Please select a category</strong>
            </div>
          <% } %>
-       </div>
+        </div>
+        <div id="union_div" style="display: none;" class="w-100">
+          <div class="form-field col-lg-12 mt-5">
+           <select name="union" class="form-control" type="text" value='<%- params.union_id ? params.union_id : "" %>'>
+             <option value="0" selected>Select Union</option>
+             <option value="1" <%- params.union_id == '1' ? "selected" : "" %>>CRMS</option>
+             <option value="2" <%- params.union_id == '2' ? "selected" : "" %>>NRMU</option>
+           </select>
+          </div>
+          <% if (params.unionError) { %>
+           <div class="alert alert-danger mt-2 w-100" role="alert">
+             <strong>Please select a union</strong>
+           </div>
+          <% } %>
+        </div>
        <div class="form-field col-lg-12 text-center mt-5">
           <input class="submit-btn" type="submit" value="<%- params.id ? 'Edit' : 'Create' %>">
           <% if (params.queryError) { %>
@@ -94,12 +117,14 @@
  </section>
  <script>
   const level =  <%- params.level ? JSON.stringify(params.level) : "null" %>
-  console.log(level);
   if(level == 3 || level == 4) $("#category_div").show();
+  if(level == 5) $("#union_div").show();
   $("#levelSelect").on("change", function() {
     const value = $(this).val();
     if(value == 3 || value == 4) $("#category_div").show();
     else $("#category_div").hide();
+    if(value == 5) $("#union_div").show();
+    else $("#union_div").hide();
   })
  </script>
 </body>
