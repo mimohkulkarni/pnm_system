@@ -94,7 +94,9 @@ route.post("/add", fileUpload({createParentPath: true}), async (req, res) => {
                 if(err) res.redirect("/requests/add");
             });
         }
-        const insert_sql = `INSERT INTO request(title, description, meeting_id, union_id, created_by, created_at ${file ? ", filepath" : ""}) VALUES (?,?,?,?,?,now()${file ? `,${JSON.stringify(filePath)}` : ""})`;
+        const insert_sql = `INSERT INTO request(title, description, meeting_id, union_id, created_by, created_at 
+            ${file ? ", filepath" : ""}) VALUES (?,?,?,?,?,now()
+            ${file ? `,${JSON.stringify(filePath.replace("/public",""))}` : ""})`;
         connection.query(insert_sql, [title, desc, meeting, req.session.user.union_id, req.session.user.username], async (err, result)=>{
             if(err){
                 console.log(err);

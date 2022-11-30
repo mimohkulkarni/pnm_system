@@ -178,9 +178,8 @@
                         alt="request_image" data-toggle="modal" data-target="#imageModal" />
                   </div>
                </div>
-            <% } else{ %>
-               <a class="btn btn-primary my-3 ml-3" href="../../<%= params.filepath %>" data-toggle="modal" data-target="#imageModal">View Attachment</a>
             <% } %>
+            <a class="btn btn-primary my-3 ml-3" href="../../<%= params.filepath %>" target="_blank">Download Attachment</a>
          <% } %>            
          <% if (params.queryError) { %>
             <div class="col-12">
@@ -373,15 +372,9 @@
          $('#imageModal').on('show.bs.modal', function (event) {
             const button = $(event.relatedTarget);
             const src = button.prop('src') ? button.prop('src') : button.prop("href");
-            if(src && fileType){
-               if([".png",".jpeg",".jpg"].includes(fileType)){
-                  $("#imageModalImg").show();
-                  $("#imageModalImg").prop("src",src);
-               }
-               else{
-                  $("#imageModalIframe").show();
-                  $("#imageModalIframe").prop("src",`https://drive.google.com/viewerng/viewer?embedded=true&url=${src}`);
-               }
+            if(src && fileType && [".png",".jpeg",".jpg"].includes(fileType)){
+               $("#imageModalImg").show();
+               $("#imageModalImg").prop("src",src);
             }
          });
       });

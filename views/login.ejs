@@ -25,7 +25,7 @@
 					<label for="username">
 						<i class="fas fa-lock"></i>
 					</label>
-					<input type="text" name="username" placeholder="Username" id="username" required value="1234">
+					<input type="text" name="username" placeholder="Username" id="username" required>
 					<% if (params.usernameError) { %>
 						<div class="alert alert-danger mt-2 w-100" role="alert">
 							<strong>Invalid Username</strong>
@@ -34,7 +34,7 @@
 					<label for="password">
 						<i class="fas fa-lock"></i>
 					</label>
-					<input type="password" name="password" placeholder="Password" id="password" minlength="3" required value="123">
+					<input type="password" name="password" placeholder="Password" id="password" minlength="3" required>
 					<% if (params.passwordError) { %>
 						<div class="alert alert-danger mt-2 w-100" role="alert">
 							<strong>Invalid Password</strong>
@@ -54,11 +54,11 @@
 					<label for="change_password">
 						<i class="fas fa-user"></i>
 					</label>
-					<input type="password" placeholder="password" id="change_password" minlength="6" required value="1234">
+					<input type="password" placeholder="password" id="change_password" minlength="6" required>
 					<label for="password">
 						<i class="fas fa-lock"></i>
 					</label>
-					<input type="password" placeholder="Password" id="change_password_1" minlength="6" required value="123">
+					<input type="password" placeholder="Password" id="change_password_1" minlength="6" required>
 					<div class="alert alert-danger mt-2 w-100" role="alert" id="passwordErrorDiv" style="display: none;">
 						<strong>Invalid Password/s</strong>
 					</div>
