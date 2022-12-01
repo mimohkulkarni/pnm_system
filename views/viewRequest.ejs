@@ -122,7 +122,7 @@
             <% if(params.level_3_remarks.length > 0) { %> 
                <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
                   <div class="request-card">
-                     <b>BO Remarks</b>
+                     <b>OS Remarks</b>
                      <ul>
                         <% params.level_3_remarks.forEach(remark => { %>
                            <li><%= remark.remark %></li>
@@ -134,7 +134,7 @@
             <% if(params.level_4_remarks.length > 0) { %> 
                <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
                   <div class="request-card">
-                     <b>OS Remarks</b>
+                     <b>BO Remarks</b>
                      <ul>
                         <% params.level_4_remarks.forEach(remark => { %>
                            <li><%= remark.remark %></li>
@@ -248,6 +248,9 @@
    </div>
    <script>
       $(document).ready(function(){
+         const curr_time = curr_date.toLocaleDateString();
+         const meeting_time = <%- params.meeting_date %>;
+         const diff = meeting_time - curr_time;
          const category_names = <%- params.category_names.length > 0 ? JSON.stringify(params.category_names) : "null" %>;
          const user_level = <%- parseInt(params.user_level) %>;
          const approved = <%- parseInt(params.user_level) === 0 %>; 
@@ -266,11 +269,21 @@
             $("#btn_reject").show();
          } 
          else if(!approved && category_names && [3,4].includes(user_level)){
-            $("#btn_div").show();
-            if(!level_4_remarks_given) $("#btn_submit").text("Approve For Close");
-            else $("#btn_submit").text("Add new Remarks");
-            if(user_level === 3) $("#btn_forward").show();
+            if(user_level === 4) {
+               $("#btn_div").show();
+               if(!level_4_remarks_given) $("#btn_submit").text("Approve For Close");
+               else $("#btn_submit").text("Add new Remarks");
+            }
+            if(user_level === 3) {
+               $("#btn_forward").show();
+               $("#btn_submit").hide()
+            } 
          } 
+         else if(diff/(1000 * 3600 * 24) < 2) {
+            $("#btn_forward").hide();
+            $("#btn_submit").hide()
+            $("#btn_reject").hide();
+         }
          else $("#btn_div").remove();
 
          $("#btn_reject,#btn_submit").click(function() {

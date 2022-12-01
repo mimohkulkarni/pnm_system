@@ -222,7 +222,8 @@ route.get('/view/:id', (req, res) => {
         re.sent_to as sent_user, re.filepath,
         CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.approved, re.forwarded,
         CONCAT(us1.first_name, " ", us1.last_name, " (", us.designation, ")") AS closed_by, me.name as meeting_name,
-        CONCAT(us2.first_name, " ", us2.last_name, " (", us.designation, ")") AS category_set_by, me.id as meeting_id
+        CONCAT(us2.first_name, " ", us2.last_name, " (", us.designation, ")") AS category_set_by, me.id as meeting_id,
+        me.meeting_date AS meeting_date
         FROM request re LEFT JOIN user us ON re.created_by = us.id
         LEFT JOIN meeting me ON re.meeting_id = me.id 
         LEFT JOIN user us1 ON re.closed_by = us1.id 
