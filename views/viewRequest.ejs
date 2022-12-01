@@ -289,6 +289,11 @@
                $("#btn_submit").hide()
             } 
          } 
+         else if(diff/(1000 * 3600 * 24) < 2) {
+            $("#btn_forward").hide();
+            $("#btn_submit").hide()
+            $("#btn_reject").hide();
+         }
          else $("#btn_div").remove();
          if(Math.ceil(Math.abs(meeting_time - new Date()) / (1000 * 60 * 60 * 24)) > 2 && user_level !== 1) {
             $("#btn_div").remove();
