@@ -222,7 +222,8 @@ route.get('/view/:id', (req, res) => {
         re.sent_to as sent_user, re.filepath,
         CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.approved, re.forwarded,
         CONCAT(us1.first_name, " ", us1.last_name, " (", us.designation, ")") AS closed_by, me.name as meeting_name,
-        CONCAT(us2.first_name, " ", us2.last_name, " (", us.designation, ")") AS category_set_by, me.id as meeting_id
+        CONCAT(us2.first_name, " ", us2.last_name, " (", us.designation, ")") AS category_set_by, me.id as meeting_id,
+        me.meeting_date AS meeting_date
         FROM request re LEFT JOIN user us ON re.created_by = us.id
         LEFT JOIN meeting me ON re.meeting_id = me.id 
         LEFT JOIN user us1 ON re.closed_by = us1.id 
@@ -244,7 +245,7 @@ route.get('/view/:id', (req, res) => {
                 params.sent_to.push(user[0]);
             }
         }
-        const remarks = await connection.query(`SELECT re.created_by, re.created_at, re.remark, us.level,
+        const remarks = await connection.query(`SELECT re.id, re.created_by, re.created_at, re.remark, us.level,
             CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") as name, us.level AS remarked_by
             FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [req_id])
         const categories = await connection.query("SELECT * FROM categories");
@@ -258,7 +259,7 @@ route.get('/view/:id', (req, res) => {
             created_at : new Date(result[0].created_at).toLocaleDateString() + " " + new Date(result[0].created_at).toLocaleTimeString(),
             closed_at: result[0].closed_at ? new Date(result[0].closed_at).toLocaleDateString() + " " + new Date(result[0].closed_at).toLocaleTimeString() : null,
             categories: categories,
-            filepath: result[0].filepath,
+            filepath: result[0].filepath.replace("public\\",""),
             filetype: result[0].filepath ? path.extname(result[0].filepath) : null,
             level_2_remarks: remarks.filter(re => parseInt(re.level) === 2),
             level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),
@@ -266,10 +267,11 @@ route.get('/view/:id', (req, res) => {
             meeting_remarks: remarks.filter(re => parseInt(re.level) === 1),
             category_ids: result[0].category_id ? String(result[0].category_id).split(",").map(c => parseInt(c)) : [],
             category_names: result[0].category_id ? String(result[0].category_id).split(",").map(c => categories.find(ca => ca.id == c).name) : [],
-            user_level: req.session.user.level
+            user_level: req.session.user.level,
+            meeting_date: result[0].meeting_date
         }
         params.status = params.open === 0 ? "Closed" : params.category_ids.length > 0 && params.approved ? "Sent to Departmental Review" : params.category_ids.length > 0 && !params.approved ? "Sent for Department Approval" : "Open";
-        // console.log(params);
+        // console.log(params.filepath);
         return res.render("viewRequest", {params: params});
     });
 });
@@ -348,6 +350,22 @@ route.post("/addRemarks", async (req, res) => {
         });
     }
     else return res.redirect("/requests");
+});
+
+route.post("/editOSRemarks", async (req, res) => {
+    const id = req.body.id;
+    const remarks = req.body.remarks;
+    if(id && remarks){
+        const update_sql = `UPDATE remarks SET remark = ? WHERE id = ?`;
+        await connection.query(update_sql, [remarks, id], async (err, result) => {
+            if(err) {
+                req.session.queryError = true;
+                return res.end(JSON.stringify({error: true}));
+            }
+            return res.end(JSON.stringify({error: false}));
+        });
+    }
+    else res.end(JSON.stringify({error: true}));
 });
 
 route.post("/forward", async (req, res) => {

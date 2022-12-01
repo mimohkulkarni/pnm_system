@@ -5,7 +5,7 @@ const level_1_paths = [...public_paths,'/requests/setCategory','/requests/close'
     '/reports','/users','/users/edit',,'/users/add','/users/activate','/users/deactivate'];
 const level_2_paths = [...public_paths,'/requests/setApproval','/requests/getCategoryUsers'];
 const level_3_paths = [...public_paths,'/requests/addRemarks','/requests/forward'];
-const level_4_paths = [...public_paths,'/requests/addRemarks'];
+const level_4_paths = [...public_paths,'/requests/addRemarks',"/requests/editOSRemarks"];
 
 module.exports = (req, res, next) => {
     // req.session.user = {
