@@ -15,7 +15,7 @@
    <link href="/css/addRequest.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-   <%- include('./components/navbar', {page: "reports", user_level: params.user_level ? params.user_level : null}) -%>
+   <%- include('./navbar', {page: "reports", user_level: params.user_level ? params.user_level : null}) -%>
     <div class="my-3">
         <div class="card mx-auto" style="max-width: 400px;border-radius: 18px;">
             <form action="/reports" method="post">

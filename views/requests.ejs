@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Manage Requests</title>
+    <title>Manage Items</title>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
@@ -15,12 +15,12 @@
     <link href="/css/request.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <%- include('./components/navbar', {page: 'requests', user_level: params.user_level ? params.user_level : null}); %>
+    <%- include('./navbar', {page: 'requests', user_level: params.user_level ? params.user_level : null}); %>
     <div class="container-fluid">
         <div class="table-responsive">
             <% if (params.add) { %>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                  <strong>Request created successfully</strong>
+                  <strong>Item created successfully</strong>
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
@@ -36,7 +36,7 @@
             <% } %>
             <% if (params.edit) { %>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                  <strong>Request edited successfully</strong>
+                  <strong>Item edited successfully</strong>
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
@@ -44,7 +44,7 @@
             <% } %>
             <% if (params.delete) { %>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                  <strong>Request deleted successfully</strong>
+                  <strong>Item deleted successfully</strong>
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
@@ -62,12 +62,12 @@
                 <div class="table-title">
                     <div class="row w-100">
                         <div class="col-sm-6">
-                            <h2>Manage <b>Requests</b></h2>
+                            <h2>Manage <b>Items</b></h2>
                         </div>
                         <div class="col-sm-6 text-right">
                             <% if (params.user_level === 5) { %>
                                 <a href="/requests/add" class="btn btn-success">
-                                    <i class="fas fa-plus"></i> <span>Add New Request</span>
+                                    <i class="fas fa-plus"></i> <span>Add New Item</span>
                                 </a>
                             <% } %>
                         </div>
@@ -107,7 +107,7 @@
                         </div>
                         <div class="col-lg-3 col-md-3 col-sm-3">
                             <div class="request-card">
-                                <b>Request Type</b>
+                                <b>Item Type</b>
                                 <select class="form-control" id="typeSelect">
                                     <option value="0">All</option>
                                     <option value="1">Open</option>
@@ -119,7 +119,7 @@
                     <table class="table table-striped table-hover" id="requestsTable">
                     </table>
                 <% } else { %>
-                    <h5 class="text-center font-weight-bold">No Requests Found!</h5>
+                    <h5 class="text-center font-weight-bold">No Items Found!</h5>
                 <% } %>
             </div>
         </div>
@@ -225,7 +225,7 @@
                         `);    
                     });
                 }
-                else $("#requestsTable").append(`<h5 class="text-center font-weight-bold">No Requests Found!</h5>`);
+                else $("#requestsTable").append(`<h5 class="text-center font-weight-bold">No Items Found!</h5>`);
             }
         });
     </script>

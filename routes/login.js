@@ -1,6 +1,6 @@
 const route = require('express').Router()
 const bodyParser = require('body-parser');
-const connection = require('../../connection');
+const connection = require('../connection');
 
 route.get('/', async (req, res) => {
     const params = {

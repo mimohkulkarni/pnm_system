@@ -1,7 +1,7 @@
 const route = require('express').Router()
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
-const connection = require('../../connection');
+const connection = require('../connection');
 const urlencodedParser = bodyParser.urlencoded({extended: false});
 const path = require('path');
 
@@ -62,14 +62,14 @@ route.get('/', async (req, res) => {
             request.closed_at = request.closed_at ? new Date(request.closed_at).toLocaleDateString() + " " + new Date(request.closed_at).toLocaleTimeString() : null;
             request.category_id = request.category_id ? String(request.category_id).split(",").map(c => parseInt(c)) : [];
             request.status = request.open === 0 ? "Closed" : request.category_id.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
-            const meeting = meetings.find(me => me.id === request.meeting_id);
-            if(new Date(meeting.meeting_date) < curr_date){
-                // console.log(meeting);
-                let new_meeting_id = meetings.find(me => new Date(me.meeting_date) > curr_date && meeting.union_id === request.union_id)?.id;
-                if(!new_meeting_id) new_meeting_id = request.meeting_id;
-                await connection.query("UPDATE `request` SET `meeting_id` = ? WHERE `id` = ? AND `open` = ?",[new_meeting_id,request.id,1]);
-                request.meeting_id = new_meeting_id;
-            }
+            // const meeting = meetings.find(me => me.id === request.meeting_id);
+            // if(new Date(meeting.meeting_date) < curr_date){
+            //     // console.log(meeting);
+            //     let new_meeting_id = meetings.find(me => new Date(me.meeting_date) > curr_date && meeting.union_id === request.union_id)?.id;
+            //     if(!new_meeting_id) new_meeting_id = request.meeting_id;
+            //     await connection.query("UPDATE `request` SET `meeting_id` = ? WHERE `id` = ? AND `open` = ?",[new_meeting_id,request.id,1]);
+            //     request.meeting_id = new_meeting_id;
+            // }
             params.requests.push(request);
         };
         // console.log(params);

@@ -1,5 +1,5 @@
 const route = require('express').Router()
-const connection = require('../../connection');
+const connection = require('../connection');
 
 route.get('/', async (req, res) => {
     const params = {

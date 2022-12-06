@@ -18,7 +18,7 @@
     </script>
 </head>
 <body>
-    <%- include('./components/navbar', {page: "meetings", user_level: params.user_level ? params.user_level : null}) -%>
+    <%- include('./navbar', {page: "meetings", user_level: params.user_level ? params.user_level : null}) -%>
     <div class="container-fluid">
         <div class="table-responsive">
             <% if (params.add) { %>
@@ -67,7 +67,7 @@
                             <th style="width: auto;">Name</th>
                             <th>Meeting Date</th>
                             <th>Created By</th>
-                            <th>Assigned Requests</th>
+                            <th>Assigned Items</th>
                             <% if(params.user_level === 1) { %>
                                 <th>Actions</th>
                             <% } %>
