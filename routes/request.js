@@ -13,7 +13,7 @@ route.get('/', async (req, res) => {
         delete: false,
         user_level: req.session.user.level
     }
-    const requests_query = `SELECT re.id, re.title,re.description, re.created_at, re.category_id, re.approved, re.open, 
+    const requests_query = `SELECT re.id, re.title,re.description, re.created_at, re.category_id, re.approved, re.open, re.prev_meeting,
             re.union_id, CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.meeting_id 
             FROM request re LEFT JOIN user us ON re.created_by = us.id 
             WHERE 
@@ -62,14 +62,21 @@ route.get('/', async (req, res) => {
             request.closed_at = request.closed_at ? new Date(request.closed_at).toLocaleDateString() + " " + new Date(request.closed_at).toLocaleTimeString() : null;
             request.category_id = request.category_id ? String(request.category_id).split(",").map(c => parseInt(c)) : [];
             request.status = request.open === 0 ? "Closed" : request.category_id.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
-            // const meeting = meetings.find(me => me.id === request.meeting_id);
-            // if(new Date(meeting.meeting_date) < curr_date){
-            //     // console.log(meeting);
-            //     let new_meeting_id = meetings.find(me => new Date(me.meeting_date) > curr_date && meeting.union_id === request.union_id)?.id;
-            //     if(!new_meeting_id) new_meeting_id = request.meeting_id;
-            //     await connection.query("UPDATE `request` SET `meeting_id` = ? WHERE `id` = ? AND `open` = ?",[new_meeting_id,request.id,1]);
-            //     request.meeting_id = new_meeting_id;
-            // }
+            const meeting = meetings.find(me => me.id === request.meeting_id);
+            if(new Date(meeting.meeting_date) < curr_date && request.open){
+                let new_meeting_id = meetings.find(me => new Date(me.meeting_date) > curr_date && meeting.union_id == request.union_id)?.id;
+                if(new_meeting_id){
+                    let prev_meeting_ids = [new_meeting_id];
+                    if(request.prev_meeting){
+                        const prev_meeting_id_array = String(request.prev_meeting).split(",");
+                        if(!prev_meeting_id_array.includes(String(new_meeting_id)) && new_meeting_id !== request.meeting_id)
+                            prev_meeting_id_array.push(new_meeting_id);
+                        prev_meeting_ids = prev_meeting_id_array;
+                    }
+                    await connection.query("UPDATE `request` SET `meeting_id` = ?, prev_meeting = ? WHERE `id` = ? AND `open` = ?",[new_meeting_id,prev_meeting_ids.join(","),request.id,1]);
+                    request.meeting_id = new_meeting_id;
+                } 
+            }
             params.requests.push(request);
         };
         // console.log(params);
@@ -238,7 +245,7 @@ route.get('/view/:id', (req, res) => {
 
     const req_id = req.params.id;
     const select_sql = `SELECT re.id, re.title, re.description, re.created_at, re.closed_at, re.category_id, re.open, 
-        re.sent_to as sent_user, re.filepath, re.freeze, re.approved, re.forwarded, me.id as meeting_id,
+        re.sent_to as sent_user, re.filepath, re.freeze, re.approved, re.forwarded, me.id as meeting_id, re.union_id,
         CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by,
         ${params.user_level === 5 ? 'us1.designation' : 'CONCAT(us1.first_name, " ", us1.last_name, " (", us1.designation, ")")'} AS closed_by,
         ${params.user_level === 5 ? 'us2.designation' : 'CONCAT(us2.first_name, " ", us2.last_name, " (", us2.designation, ")")'} AS category_set_by,
@@ -269,7 +276,7 @@ route.get('/view/:id', (req, res) => {
             FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [req_id])
         const categories = await connection.query("SELECT * FROM categories");
         if(params.user_level === 1){
-            const meetings = await connection.query("SELECT id, name FROM meeting WHERE meeting_date > now() AND union_id = ?",[req.session.user.union_id]);
+            const meetings = await connection.query("SELECT id, name FROM meeting WHERE meeting_date > now() AND union_id = ?",[result[0].union_id]);
             params.meetings = meetings.filter(me => me.id !== result[0].meeting_id);
         }
         params = {
@@ -278,7 +285,7 @@ route.get('/view/:id', (req, res) => {
             created_at : new Date(result[0].created_at).toLocaleDateString() + " " + new Date(result[0].created_at).toLocaleTimeString(),
             closed_at: result[0].closed_at ? new Date(result[0].closed_at).toLocaleDateString() + " " + new Date(result[0].closed_at).toLocaleTimeString() : null,
             categories: categories,
-            filepath: result[0].filepath.replace("public\\",""),
+            filepath: result[0].filepath ? result[0].filepath.replace("public\\","") : null,
             filetype: result[0].filepath ? path.extname(result[0].filepath) : null,
             level_2_remarks: remarks.filter(re => parseInt(re.level) === 2),
             level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),
@@ -455,8 +462,16 @@ route.post("/forwardToNextMeeting", async (req, res) => {
     const req_id = req.body.id;
     
     if(meeting_id && req_id && curr_meeting_id){
+        const check_prev_meeting_ids = await connection.query(`SELECT prev_meeting FROM request WHERE id = ?`,[req_id]);
+        let prev_meeting_ids = [curr_meeting_id];
+        if(check_prev_meeting_ids[0].prev_meeting){
+            const prev_meeting_id_array = String(check_prev_meeting_ids[0].prev_meeting).split(",");
+            if(!prev_meeting_id_array.includes(String(curr_meeting_id))) 
+                prev_meeting_id_array.push(curr_meeting_id);
+            prev_meeting_ids = prev_meeting_id_array;
+        }
         const insert_sql = `UPDATE request SET meeting_id = ?, prev_meeting = ? WHERE id = ?`;
-        await connection.query(insert_sql, [meeting_id, curr_meeting_id, req_id], async (err, result) => {
+        await connection.query(insert_sql, [meeting_id, prev_meeting_ids.join(","), req_id], async (err, result) => {
             // console.log(err);
             if(err) req.session.queryError = true;
             else req.session.meetingRequest = true;

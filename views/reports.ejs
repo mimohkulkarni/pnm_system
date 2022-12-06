@@ -170,7 +170,7 @@
                      </div>
                   <% } %>
                   <% if(params.user_level === 1) { %>
-                     <div class="w-100 text-right px-3 mt-3">
+                     <div class="w-100 text-right px-3 mt-3 btn_print_div">
                         <button class="btn btn-secondary btn_print" data-id="<%= request.id %>" type="button">
                            Print
                         </button>
@@ -183,7 +183,7 @@
    <script>
       $(document).ready(function(){
          const requests = <%- params.requests.length > 0 ? JSON.stringify(params.requests) : [] %>;
-         const summary = <%- params.requests.length > 0 && params.summary.length > 0 ? JSON.stringify(params.summary) : [] %>;
+         const summary = <%- params.requests.length > 0 && params.summary.length > 0 ? JSON.stringify(params.summary) : JSON.stringify([]) %>;
 
          $(".btn_print").on("click", function() {
             const req_id = parseInt($(this).data("id"));
@@ -225,7 +225,7 @@
                         </tr>
                      </thead>
                      <tbody>
-                        ${summary.map((cat,i) => `<tr>
+                        ${summary.length > 0 && summary.map((cat,i) => `<tr>
                            <td>${i+1}</td>
                            <td>${cat.category_name}</td>
                            <td>${cat.item_numbers.join(", ")}</td>
@@ -233,13 +233,36 @@
                      </tbody>
                   </table>
                </div>`
-            mywindow.document.write(`<div class="request-list my-5 mx-auto">${summary_page} ${$(`#meeting_report`).html()}</div>`);
+            const item_summary_page = `<div>
+                  <table class="table table-striped mx-auto" style="max-Width:900px">
+                     <thead>
+                        <tr>
+                           <th colspan="3" class="text-center">Item Summary</th>
+                        </tr>
+                        <tr>
+                           <th>Sr No.</th>
+                           <th>Item Number</th>
+                           <th>Meetings</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        ${requests.map((re,i) => `<tr>
+                           <td>${i+1}</td>
+                           <td>${re.id}</td>
+                           <td>${re.prev_meeting.join(", ")}</td>
+                        </tr>`)}
+                     </tbody>
+                  </table>
+               </div>`
+            $(".btn_print_div").hide();
+            mywindow.document.write(`<div class="request-list my-5 mx-auto">${summary.length > 0 ? summary_page : ""} ${item_summary_page} ${$(`#meeting_report`).html()}</div>`);
             mywindow.document.write('</body></html>');
-            // setTimeout(function(){
-            //    mywindow.print();
-            //    mywindow.close();
-            //    $("#btn_print_report").show();
-            // },1000);
+            setTimeout(function(){
+               mywindow.print();
+               mywindow.close();
+               $(".btn_print").show();
+               $("#btn_print_report").show();
+            },1000);
          });
       })
    </script>
