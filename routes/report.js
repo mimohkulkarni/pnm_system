@@ -45,8 +45,8 @@ route.post('/', async (req, res) => {
                     FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [request.id]);
                 request.level_2_remarks = remarks.filter(re => parseInt(re.level) === 2);
                 request.level_3_remarks = remarks.filter(re => parseInt(re.level) === 3);
-                request.level_4_remarks = remarks.filter(re => parseInt(re.level) === 4);      
-                request.meeting_remarks = remarks.filter(re => parseInt(re.level) === 1);          
+                request.level_4_remarks = remarks.filter(re => parseInt(re.level) === 4);
+                request.meeting_remarks = remarks.filter(re => parseInt(re.level) === 1);
                 request.category_ids = request.category_id ? String(request.category_id).split(",").map(c => parseInt(c)) : [];
                 request.category_names = request.category_id ? String(request.category_id).split(",").map(c => categories.find(ca => ca.id == c).name) : [];
                 request.created_at = new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString();
@@ -62,7 +62,7 @@ route.post('/', async (req, res) => {
                 params.requests.push(request);
             };
             params.meetings = meetings;
-            console.log(params.summary);
+            // console.log(params);
             return res.render("reports", {params: params});
         });
     }

@@ -61,9 +61,17 @@
             <label class="label" for="file" style="bottom: 30px;">Upload File</label>
          </div>
          <% if (params.filepath) { %>
-            <img class="img-responsive my-3 ml-3" style="cursor: pointer;" width="100" src="/<%= params.filepath %>"
-             alt="request_image" data-toggle="modal" data-target="#imageModal" />
-          <% } %>
+            <% if([".png",".jpeg",".jpg"].includes(params.filetype)) { %>
+               <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
+                  <div class="request-card">
+                     <b>Attachments</b>
+                     <img class="img-responsive my-3 ml-3" style="cursor: pointer;" width="100" src="../../<%= params.filepath %>"
+                        alt="request_image" data-toggle="modal" data-target="#imageModal" />
+                  </div>
+               </div>
+            <% } %>
+            <a class="btn btn-primary my-3 ml-3" href="../../<%= params.filepath %>" download target="_blank">Download Attachment</a>
+         <% } %>
          <div class="alert alert-danger mt-2 w-100" role="alert" id="fileError" style="display: none;">
             <strong>File size too big. (max 5MB)</strong>
           </div>
