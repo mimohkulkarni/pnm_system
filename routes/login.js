@@ -28,7 +28,7 @@ route.post("/", (req,res) => {
     }
     
     if(username && password){
-        const login_query = `SELECT id, level, category_id, union_id, active FROM user WHERE emp_no = ? AND password = ?`;
+        const login_query = `SELECT id, level, category_id, union_id, active, password_change FROM user WHERE emp_no = ? AND password = ?`;
         connection.query(login_query, [username,password], (err, result, fields) => {
             if(err || result.length !== 1 || (result.length === 1 && result[0].active == 0)){
                 params.loginError = true;
@@ -45,7 +45,7 @@ route.post("/", (req,res) => {
                 req.session.user_id = result[0].id;
                 return res.redirect("/login");
             } 
-            return res.redirect("/requests");
+            else return res.redirect("/requests");
         })
     }
     else{

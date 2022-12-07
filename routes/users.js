@@ -60,6 +60,7 @@ route.post('/add', async (req, res) => {
         mobnoError: false,
         levelError: false,
         unionError: false,
+        uniqueError: false,
         categoryError: false,
         first_name: first_name,
         last_name: last_name,
@@ -73,6 +74,13 @@ route.post('/add', async (req, res) => {
     
     if(first_name && last_name && emp_no && mob_no && mob_no.length === 10 && level && designation &&
         ([1,2,5].includes(level) || ([3,4].includes(level) && category)) && (level !== 5 || (level === 5 && union_id !== 0))){
+        const user_exists = await connection.query("SELECT emp_no, mobile_no FROM user WHERE emp_no = ? OR mobile_no = ?",[emp_no,mob_no]);
+        if(user_exists.length > 0 && (user_exists[0].emp_no || user_exists[0].mob_no)){
+            params.uniqueError = true;
+            const categories = await connection.query("SELECT * FROM categories");
+            params.categories = categories;
+            return res.render("addUser", {params: params});
+        }
         const insert_sql = `INSERT INTO user(emp_no, first_name, last_name, mobile_no, password, password_change, level, designation, created_by
             ${[3,4].includes(level) ? ",category_id" : ""}${level === 5 ? ",union_id" : ""}) 
             VALUES (?,?,?,?,'pass123',1,?,?,?${[3,4].includes(level) ? `,${category}` : ""}${level === 5 ? `,${union_id}` : ""})`;

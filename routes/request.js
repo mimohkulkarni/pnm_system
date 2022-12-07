@@ -164,17 +164,18 @@ route.get('/edit/:id', (req, res) => {
         params.title = result[0].title;
         params.desc = result[0].description;
         params.meeting_id = result[0].meeting_id;
-        params.filepath = result[0].filepath.replace("public\\","");
+        params.filepath = result[0].filepath.replace("public\\","").replace("public/","");
         params.meetings = meetings;
         return res.render("addRequest", {params: params});
     });
 });
 
-route.post("/edit", urlencodedParser, async (req, res) => {
+route.post("/edit", fileUpload({createParentPath: true}), async (req, res) => {
     const id = req.body.id;
     const title = req.body.title;
     const desc = req.body.description;
     const meeting_id = parseInt(req.body.meeting);
+    const file = req.files ? req.files.file : null;
 
     const params = {
         titleError: false,
@@ -187,8 +188,16 @@ route.post("/edit", urlencodedParser, async (req, res) => {
         id: id
     }
 
-    if(title && desc && meeting_id){
-        const update_sql = "UPDATE `request` SET `title`= ?, `description`= ?, meeting_id = ? WHERE `id` = ?";
+    if(id && title && desc && meeting_id){
+        let filePath = null;
+        if(file){
+            const filename = file.name.replace(/\s+/g, "_").replace(/\s+/g, "_").split(".");
+            filePath = path.join("public","files", `${filename[0]}${new Date().getTime()}.${filename[1]}`);
+            file.mv(filePath, err => {
+                if(err) res.redirect("/requests");
+            });
+        }
+        const update_sql = `UPDATE request SET title= ?, description= ?, meeting_id = ?${file ? `,filepath = ${JSON.stringify(filePath.replace("public\\",""))}` : ""} WHERE id = ?`;
         connection.query(update_sql, [title, desc, meeting_id, id], async (err, result)=>{
             if(err){
                 // console.log(err);
@@ -285,7 +294,7 @@ route.get('/view/:id', (req, res) => {
             created_at : new Date(result[0].created_at).toLocaleDateString() + " " + new Date(result[0].created_at).toLocaleTimeString(),
             closed_at: result[0].closed_at ? new Date(result[0].closed_at).toLocaleDateString() + " " + new Date(result[0].closed_at).toLocaleTimeString() : null,
             categories: categories,
-            filepath: result[0].filepath ? result[0].filepath.replace("public\\","") : null,
+            filepath: result[0].filepath ? result[0].filepath.replace("public\\","").replace("public/","") : null,
             filetype: result[0].filepath ? path.extname(result[0].filepath) : null,
             level_2_remarks: remarks.filter(re => parseInt(re.level) === 2),
             level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),

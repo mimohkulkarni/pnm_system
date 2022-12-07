@@ -108,8 +108,13 @@
        <div class="form-field col-lg-12 text-center mt-5">
           <input class="submit-btn" type="submit" value="<%- params.id ? 'Edit' : 'Create' %>">
           <% if (params.queryError) { %>
-             <div class="alert alert-success alert-dismissible text-center fade show" role="alert">
+             <div class="alert alert-danger alert-dismissible text-center fade show mt-3" role="alert">
                <strong>Opps! Item did not create. Please try again in some time.</strong>
+             </div>
+           <% } %>
+          <% if (params.uniqueError) { %>
+             <div class="alert alert-danger alert-dismissible text-center fade show mt-3" role="alert">
+               <strong>Employee number and mobile number should be unique.</strong>
              </div>
            <% } %>
        </div>
