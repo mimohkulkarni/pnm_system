@@ -5,7 +5,7 @@ const level_1_paths = [...public_paths,'/requests/setCategory','/requests/close'
     '/reports','/users','/users/edit',,'/users/add','/users/activate','/users/deactivate'];
 const level_2_paths = [...public_paths,'/requests/setApproval','/requests/getCategoryUsers'];
 const level_3_paths = [...public_paths,'/requests/addRemarks','/requests/forward'];
-const level_4_paths = [...public_paths,'/requests/addRemarks',"/requests/editOSRemarks",'/requests/forward'];
+const level_4_paths = [...public_paths,'/requests/addRemarks',"/requests/editOSRemarks",'/requests/forward','/requests/forwardToAdmin'];
 
 module.exports = (req, res, next) => {
     // req.session.user = {
@@ -22,6 +22,7 @@ module.exports = (req, res, next) => {
             (req.session.user?.level === 3 && level_3_paths.includes(url)) ||
             (req.session.user?.level === 2 && level_2_paths.includes(url)) ||
             (req.session.user?.level === 1 && level_1_paths.includes(url))) {
+            res.locals.userName = req.session.user?.name;
             return next();
         } else {
             return res.redirect("/401");

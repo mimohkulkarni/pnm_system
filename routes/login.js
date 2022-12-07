@@ -28,13 +28,16 @@ route.post("/", (req,res) => {
     }
     
     if(username && password){
-        const login_query = `SELECT id, level, category_id, union_id, active, password_change FROM user WHERE emp_no = ? AND password = ?`;
+        const login_query = `SELECT id, CONCAT(first_name, " ", last_name) as name, level, 
+            category_id, union_id, active, password_change FROM user WHERE emp_no = ? AND password = ?`;
         connection.query(login_query, [username,password], (err, result, fields) => {
+            // connection.end();
             if(err || result.length !== 1 || (result.length === 1 && result[0].active == 0)){
                 params.loginError = true;
                 return res.render('login',{params:params});
             }
             req.session.user = {
+                name: result[0].name,
                 username: parseInt(result[0].id),
                 level: parseInt(result[0].level),
                 category_id: parseInt(result[0].category_id),
@@ -67,6 +70,7 @@ route.post("/changePassword", (req,res) => {
     if(id && password){
         const login_query = `UPDATE user SET password = ?, password_change = ? WHERE id = ?`;
         connection.query(login_query, [password, 0, id], (err, result) => {
+            // connection.end();
             if(err){
                 params.queryError = true;
                 return res.render('login',{params:params});

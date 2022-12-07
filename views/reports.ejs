@@ -125,25 +125,16 @@
                            </div>
                         </div>
                      <% } %>
-                     <% if(request.level_3_remarks.length > 0) { %> 
-                        <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
-                           <div class="request-card">
-                              <b>OS Remarks</b>
-                              <ul>
-                                 <% request.level_3_remarks.forEach(remark => { %>
-                                    <li><%= remark.remark %></li>
-                                 <% }); %>
-                              </ul>
-                           </div>
-                        </div>
-                     <% } %>
                      <% if(request.level_4_remarks.length > 0) { %> 
                         <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
                            <div class="request-card">
-                              <b>BO Remarks</b>
+                              <b><%- request.level_4_desig ? request.level_4_desig : "Department" %> Remarks</b>
                               <ul>
                                  <% request.level_4_remarks.forEach(remark => { %>
-                                    <li><%= remark.remark %></li>
+                                    <li>
+                                       <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString() + " " + new Date(remark.created_at).toLocaleTimeString() %></p>
+                                       <p><%= remark.remark %></p>
+                                    </li>
                                  <% }); %>
                               </ul>
                            </div>

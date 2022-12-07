@@ -273,16 +273,26 @@ route.get('/view/:id', (req, res) => {
             params.closed = true;
             // return res.render("viewRequest", {params: params});
         }
-        if(result[0].sent_user && result[0].sent_user.split(",").length > 0){
-            for (const user_id of result[0].sent_user.split(",")) {
-                const user = await connection.query(`SELECT id, CONCAT(first_name, " ", last_name, " (", designation, ")") AS name
-                    FROM user WHERE id = ?`, [user_id])
-                params.sent_to.push(user[0]);
+        const sent_user = result[0].sent_user ? result[0].sent_user.split(",") : [];
+        const category_ids = result[0].category_id ? String(result[0].category_id).split(",").map(c => parseInt(c)) : [];
+        if(sent_user.length > 0){
+            for (const cat of category_ids) {
+                const users = await connection.query(`SELECT id, CONCAT(first_name, " ", last_name, " (", designation, ")") AS name
+                    FROM user WHERE category_id = ?`, [cat])
+                users.forEach(user => {
+                    if(sent_user.includes(String(user.id))) user.selected = true;
+                    params.sent_to.push(user);
+                });
             }
+            // for (const user_id of sent_user) {
+            //     const user = await connection.query(`SELECT id, CONCAT(first_name, " ", last_name, " (", designation, ")") AS name
+            //         FROM user WHERE id = ?`, [user_id])
+            //     params.sent_to.push(user[0]);
+            // }
         }
         const remarks = await connection.query(`SELECT re.id, re.created_by, re.created_at, re.remark, us.level,
             CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") as name, us.level AS remarked_by
-            FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [req_id])
+            FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ? ORDER BY re.created_at ASC`, [req_id])
         const categories = await connection.query("SELECT * FROM categories");
         if(params.user_level === 1){
             const meetings = await connection.query("SELECT id, name FROM meeting WHERE meeting_date > now() AND union_id = ?",[result[0].union_id]);
@@ -297,11 +307,12 @@ route.get('/view/:id', (req, res) => {
             filepath: result[0].filepath ? result[0].filepath.replace("public\\","").replace("public/","") : null,
             filetype: result[0].filepath ? path.extname(result[0].filepath) : null,
             level_2_remarks: remarks.filter(re => parseInt(re.level) === 2),
+            level_3_4_remarks: remarks.filter(re => [3,4].includes(parseInt(re.level))),
             level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),
             level_4_remarks: remarks.filter(re => parseInt(re.level) === 4),
             meeting_remarks: remarks.filter(re => parseInt(re.level) === 1),
-            category_ids: result[0].category_id ? String(result[0].category_id).split(",").map(c => parseInt(c)) : [],
-            category_names: result[0].category_id ? String(result[0].category_id).split(",").map(c => categories.find(ca => ca.id == c).name) : [],
+            category_ids: category_ids,
+            category_names: result[0].category_id ? category_ids.map(c => categories.find(ca => ca.id == c).name) : [],
             user_level: req.session.user.level,
             meeting_date: result[0].meeting_date
         }
@@ -484,6 +495,23 @@ route.post("/forwardToNextMeeting", async (req, res) => {
             // console.log(err);
             if(err) req.session.queryError = true;
             else req.session.meetingRequest = true;
+            res.redirect("/requests");
+        });
+    }
+    else{
+        req.session.queryError = true;
+        return res.redirect("/requests");
+    } 
+});
+
+route.post("/forwardToAdmin", async (req, res) => {
+    const req_id = req.body.id;
+    
+    if(req_id){
+        const insert_sql = `UPDATE request SET approved = ? WHERE id = ?`;
+        await connection.query(insert_sql, [0, req_id], async (err, result) => {
+            // console.log(err);
+            if(err) req.session.queryError = true;
             res.redirect("/requests");
         });
     }

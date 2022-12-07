@@ -43,10 +43,12 @@ route.post('/', async (req, res) => {
             params.summary = [];
             for (const request of result) {
                 const remarks = await connection.query(`SELECT re.created_by, re.created_at, re.remark, us.level, re.meeting_remarks,
-                    CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")"), us.level AS remarked_by
+                    us.designation as name, us.level,re.created_by
                     FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ?`, [request.id]);
                 request.level_2_remarks = remarks.filter(re => parseInt(re.level) === 2);
-                request.level_3_remarks = remarks.filter(re => parseInt(re.level) === 3);
+                // request.level_3_4_remarks = remarks.filter(re => [3,4].includes(parseInt(re.level)));
+                // request.level_3_remarks = remarks.filter(re => parseInt(re.level) === 3);
+                request.level_4_desig = remarks.length > 0 ? remarks.filter(re => parseInt(re.level) === 4)[0]?.name : null;
                 request.level_4_remarks = remarks.filter(re => parseInt(re.level) === 4);
                 request.meeting_remarks = remarks.filter(re => parseInt(re.level) === 1);
                 request.prev_meeting = request.prev_meeting ? String(request.prev_meeting).split(",").map(pme => meetings.find(me => me.id == pme).name) : [request.meeting_name];

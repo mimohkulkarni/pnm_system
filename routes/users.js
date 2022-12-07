@@ -82,8 +82,8 @@ route.post('/add', async (req, res) => {
             return res.render("addUser", {params: params});
         }
         const insert_sql = `INSERT INTO user(emp_no, first_name, last_name, mobile_no, password, password_change, level, designation, created_by
-            ${[3,4].includes(level) ? ",category_id" : ""}${level === 5 ? ",union_id" : ""}) 
-            VALUES (?,?,?,?,'pass123',1,?,?,?${[3,4].includes(level) ? `,${category}` : ""}${level === 5 ? `,${union_id}` : ""})`;
+            ${[3,4].includes(level) ? ",category_id" : ""}${level === 5 ? ",union_id" : ""}${level === 1 ? ",active" : ""}) 
+            VALUES (?,?,?,?,'pass123',1,?,?,?${[3,4].includes(level) ? `,${category}` : ""}${level === 5 ? `,${union_id}` : ""}${level === 5 ? "1" : ""})`;
         connection.query(insert_sql, [emp_no, first_name, last_name, mob_no, level, designation, req.session.user.username], async (err, result)=>{
             if(err){
                 console.log(err);
