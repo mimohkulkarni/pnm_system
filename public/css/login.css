@@ -6,8 +6,19 @@
 .login {
     width: 400px;
     background-color: #ffffff;
-    box-shadow: 0 0 9px 0 rgba(0, 0, 0, 0.3);
     margin: 100px auto;
+}
+.login-logo{
+    /* background-color: unset !important; */
+    background-color: #435165;
+}
+.login-logo h5{
+    margin-bottom: -60px;
+}
+.inner-login{
+    background-color: white !important;
+    box-shadow: 0 0 9px 0 rgba(0, 0, 0, 0.3);
+    padding-top: 50px;
 }
 .login form {
     display: flex;

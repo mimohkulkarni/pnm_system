@@ -13,11 +13,17 @@
    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
    <link href="/css/style.css" rel="stylesheet" type="text/css">
    <link href="/css/addRequest.css" rel="stylesheet" type="text/css">
+   <style>
+      .request{
+         max-width: 1200px;
+      }
+   </style>
 </head>
 <body>
    <%- include('./navbar', {page: "reports", user_level: params.user_level ? params.user_level : null}) -%>
+   <% const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }; %>
     <div class="my-3">
-        <div class="card mx-auto" style="max-width: 400px;border-radius: 18px;">
+        <div class="card mx-auto" style="max-width: 500px;border-radius: 18px;">
             <form action="/reports" method="post">
                 <div class="card-body row">
                     <div class="col-12">
@@ -37,6 +43,49 @@
             </form>
         </div>
     </div>
+    <div class="my-3">
+        <div class="card mx-auto p-5" style="max-width: 500px;border-radius: 18px;">            
+            <div class="col-12">
+               <p class="mt-2 mb-1">Please select fields to be shown in report -</p>
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="meeting_summary" checked>
+                  <label class="form-check-label" for="inlineCheckbox1">Meeting Summary</label>
+               </div>
+               <!-- <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="dept_summary" checked>
+                  <label class="form-check-label" for="inlineCheckbox1">Department Summary</label>
+               </div> -->
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox2" value="item_summary" checked>
+                  <label class="form-check-label" for="inlineCheckbox2">Item Summary</label>
+               </div>
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox3" value="created_at" checked>
+                  <label class="form-check-label" for="inlineCheckbox3">Created At</label>
+               </div>
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox4" value="created_by" checked>
+                  <label class="form-check-label" for="inlineCheckbox4">Created By</label>
+               </div>
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox7" value="assigned_meeting" checked>
+                  <label class="form-check-label" for="inlineCheckbox7">Assigned Meeting</label>
+               </div>
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox5" value="closed_at" checked>
+                  <label class="form-check-label" for="inlineCheckbox5">Closed At</label>
+               </div>
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox6" value="closed_by" checked>
+                  <label class="form-check-label" for="inlineCheckbox6">Closed By</label>
+               </div>
+               <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="checkbox" id="inlineCheckbox8" value="dept_set_by" checked>
+                  <label class="form-check-label" for="inlineCheckbox8">Department Set By</label>
+               </div>
+         </div>
+        </div>
+    </div>
     <% if(params.requests.length > 0){ %>
         <div class="request-list" id="meeting_report">
             <div class="w-100 text-right">
@@ -44,43 +93,135 @@
                   Print Meeting Report
                </button>
             </div>
+            <div class="bg-white my-2 mx-auto p-4" style="max-Width:1200px;border-radius: 18px;">
+               <table class="table table-striped table-bordered mx-auto" style="max-Width:1200px" id="meeting_summary">
+                  <thead>
+                     <tr>
+                        <th colspan="7" class="text-center">Meeting Summary</th>
+                     </tr>
+                     <tr>
+                        <th rowspan="2" class="text-center align-middle">Department</th>
+                        <th rowspan="2" class="text-center align-middle">Item Numbers</th>
+                        <th colspan="5" class="text-center">Item Count</th>
+                     </tr>
+                     <tr class="text-center">
+                        <th>New</th>
+                        <th>Pertained</th>
+                        <th>Closed</th>
+                        <th>Open / Forwarded</th>
+                        <th>Total</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <% params.summary.forEach((cat,i) => { %>
+                        <tr>
+                           <td><%= cat.category_name %></td>
+                           <td>
+                              <% cat.item_numbers.forEach(item => { %>
+                                 <a href="#request<%= item.id %>" class="item_tag">#<%= item.id %></a>
+                              <% }) %>
+                           </td>
+                           <td class="text-center"><%= cat.item_numbers.filter(item => item.new)?.length %></td>
+                           <td class="text-center"><%= cat.item_numbers.filter(item => item.pertained)?.length %></td>
+                           <td class="text-center"><%= cat.item_numbers.filter(item => item.close)?.length %></td>
+                           <td class="text-center"><%= cat.item_numbers.filter(item => item.open)?.length %></td>
+                           <th class="text-center"><%= cat.item_numbers?.length %></th>
+                        </tr>
+                     <% }) %>
+                     <tr>
+                        <th colspan="2">Total</th>
+                        <th class="text-center"><%= params.summary.map(cat => cat.item_numbers.filter(item => item.new)?.length).reduce((a,b) => b+a) %></th>
+                        <th class="text-center"><%= params.summary.map(cat => cat.item_numbers.filter(item => item.pertained)?.length).reduce((a,b) => b+a) %></th>
+                        <th class="text-center"><%= params.summary.map(cat => cat.item_numbers.filter(item => item.close)?.length).reduce((a,b) => b+a) %></th>
+                        <th class="text-center"><%= params.summary.map(cat => cat.item_numbers.filter(item => item.open)?.length).reduce((a,b) => b+a) %></th>
+                        <th class="text-center"><%= params.summary.map(cat => cat.item_numbers?.length).reduce((a,b) => b+a) %></th>
+                     </tr>
+                  </tbody>
+               </table>
+               <!-- <table class="table table-striped table-bordered my-5 mx-auto" style="max-Width:1200px">
+                  <thead>
+                     <tr>
+                        <th colspan="3" class="text-center">Department Summary</th>
+                     </tr>
+                     <tr>
+                        <th>Sr No.</th>
+                        <th>Department</th>
+                        <th>Item Numbers</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <% params.summary.forEach((cat,i) => { %><tr>
+                        <td><%= i+1 %></td>
+                        <td><%= cat.category_name %></td>
+                        <td>
+                           <% cat.item_numbers.forEach(item => { %>
+                              <a href="#request<%= item.id %>" class="item_tag">#<%= item.id %></a>
+                           <% }) %>
+                        </td>
+                     </tr>
+                     <% }) %>
+                  </tbody>
+               </table> -->
+               <table class="table table-striped table-bordered mx-auto" style="max-Width:1200px" id="item_summary">
+                  <thead>
+                     <tr>
+                        <th colspan="4" class="text-center">Item Summary</th>
+                     </tr>
+                     <tr>
+                        <th>Sr No.</th>
+                        <th>Item Number</th>
+                        <th>Meetings</th>
+                        <th>Status</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <% params.requests.forEach((re,i) => { %><tr>
+                        <td><%= i+1 %></td>
+                        <td><a href="#request<%= re.id %>" class="item_tag">#<%= re.id %></a></td>
+                        <td><%= re.prev_meeting.join(", ") %></td>
+                        <td><%- re.open ? "Open" : "Closed" %></td>
+                     </tr>
+                     <% }) %>
+                  </tbody>
+               </table>
+            </div>
             <% params.requests.forEach(request => { %>
                <div class="request row mx-auto" id="request<%= request.id %>">
                   <div class="col-lg-12 col-md-12 col-sm-12 text-right px-5">
                      <span class="status <%- request.status === 'Closed' ? 'status-closed' : '' %>"><%= request.status %></span>
                   </div>
                   <div class="col-lg-12 col-md-12 col-sm-12">
-                     <h3><%= request.title %></h3>
-                     <p><%= request.description %></p>
+                     <h3 class="mt-2"><%= request.title %></h3>
+                     <p class="mt-2 mb-4"><%= request.description %></p>
                   </div>
                   <div class="col-lg-12 col-md-12 col-sm-12 row">
-                     <div class="col-lg-6 col-md-6 col-sm-12">
+                     <div class="col-lg-6 col-md-6 col-sm-12 created_at">
                         <div class="request-card">
                            <b>Created At</b>
                            <p><%= request.created_at %></p>
                         </div>
                      </div>
-                     <div class="col-lg-6 col-md-6 col-sm-12">
+                     <div class="col-lg-6 col-md-6 col-sm-12 created_by">
                         <div class="request-card">
                            <b>Created By</b>
                            <p><%= request.created_by %></p>
                         </div>
                      </div>
                      <% if (request.open === 0) { %> 
-                        <div class="col-lg-6 col-md-6 col-sm-12 mt-4">
+                        <div class="col-lg-6 col-md-6 col-sm-12 mt-4 closed_at">
                            <div class="request-card">
                               <b>Closed At</b>
                               <p><%= request.closed_at %></p>
                            </div>
                         </div>
-                        <div class="col-lg-6 col-md-6 col-sm-12 mt-4">
+                        <div class="col-lg-6 col-md-6 col-sm-12 mt-4 closed_by">
                            <div class="request-card">
                               <b>Closed By</b>
                               <p><%= request.closed_by %></p>
                            </div>
                         </div>
                      <% } %>
-                     <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
+                     <div class="col-lg-12 col-md-12 col-sm-12 mt-4 assigned_meeting">
                         <div class="request-card">
                            <b>Assigned Meeting</b>
                            <p><%= request.meeting_name %></p>
@@ -106,7 +247,7 @@
                               </div>
                            </div>
                         <% } %>
-                        <div class="<%- request.category_names.length > 1 ? 'col-lg-12 col-md-12 col-sm-12 mt-4' : 'col-lg-6 col-md-6 col-sm-12 mt-4' %>">
+                        <div class="<%- request.category_names.length > 1 ? 'col-lg-12 col-md-12 col-sm-12 mt-4 dept_set_by' : 'col-lg-6 col-md-6 col-sm-12 mt-4 dept_set_by' %>">
                            <div class="request-card">
                               <b>Department Set By</b>
                               <p><%= request.category_set_by %></p>
@@ -132,7 +273,7 @@
                               <ul>
                                  <% request.level_4_remarks.forEach(remark => { %>
                                     <li>
-                                       <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString() + " " + new Date(remark.created_at).toLocaleTimeString() %></p>
+                                       <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString('en-us',dateOptions) %></p>
                                        <p><%= remark.remark %></p>
                                     </li>
                                  <% }); %>
@@ -176,6 +317,7 @@
          const requests = <%- params.requests.length > 0 ? JSON.stringify(params.requests) : [] %>;
          const summary = <%- params.requests.length > 0 && params.summary.length > 0 ? JSON.stringify(params.summary) : JSON.stringify([]) %>;
 
+         console.log(summary);
          $(".btn_print").on("click", function() {
             const req_id = parseInt($(this).data("id"));
             $(this).hide();
@@ -200,53 +342,11 @@
             mywindow.document.write(`<html><head><title>Meeting Report</title>`);
             mywindow.document.write('<link rel="stylesheet" href="/css/style.css" type="text/css" />');
             mywindow.document.write('<link rel="stylesheet" href="/css/addRequest.css" type="text/css" />');
-            mywindow.document.write('<style>.request{border:1px solid black} .request_list{margin: 0 auto;} </style>');
+            mywindow.document.write('<style>.request{border:1px solid black;border-radius: 0;} .request_list{margin: 0 auto;border-radius: 0;} .item_tag{color:black;} </style>');
             mywindow.document.write('<link rel="stylesheet" href="/css/bootstrap.css" type="text/css" />');
-            mywindow.document.write('</head><body >');         
-            const summary_page = `<div>
-                  <table class="table table-striped mx-auto" style="max-Width:900px">
-                     <thead>
-                        <tr>
-                           <th colspan="3" class="text-center">Meeting Summary</th>
-                        </tr>
-                        <tr>
-                           <th>Sr No.</th>
-                           <th>Department</th>
-                           <th>Item Numbers</th>
-                        </tr>
-                     </thead>
-                     <tbody>
-                        ${summary.length > 0 && summary.map((cat,i) => `<tr>
-                           <td>${i+1}</td>
-                           <td>${cat.category_name}</td>
-                           <td>${cat.item_numbers.join(", ")}</td>
-                        </tr>`)}
-                     </tbody>
-                  </table>
-               </div>`
-            const item_summary_page = `<div>
-                  <table class="table table-striped mx-auto" style="max-Width:900px">
-                     <thead>
-                        <tr>
-                           <th colspan="3" class="text-center">Item Summary</th>
-                        </tr>
-                        <tr>
-                           <th>Sr No.</th>
-                           <th>Item Number</th>
-                           <th>Meetings</th>
-                        </tr>
-                     </thead>
-                     <tbody>
-                        ${requests.map((re,i) => `<tr>
-                           <td>${i+1}</td>
-                           <td>${re.id}</td>
-                           <td>${re.prev_meeting.join(", ")}</td>
-                        </tr>`)}
-                     </tbody>
-                  </table>
-               </div>`
+            mywindow.document.write('</head><body >');
             $(".btn_print_div").hide();
-            mywindow.document.write(`<div class="request-list my-5 mx-auto">${summary.length > 0 ? summary_page : ""} ${item_summary_page} ${$(`#meeting_report`).html()}</div>`);
+            mywindow.document.write(`<div class="request-list my-5 mx-auto">${$(`#meeting_report`).html()}</div>`);
             mywindow.document.write('</body></html>');
             setTimeout(function(){
                mywindow.print();
@@ -254,6 +354,20 @@
                $(".btn_print").show();
                $("#btn_print_report").show();
             },1000);
+         });
+
+         $(".form-check-input").change(function() {
+            const value = $(this).val();
+            console.log(value);
+            console.log(this.checked);
+            if(this.checked){
+               $(`#${value}`).show()
+               $(`.${value}`).show()
+            }
+            else{
+               $(`#${value}`).hide()
+               $(`.${value}`).hide()
+            }
          });
       })
    </script>

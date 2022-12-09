@@ -5,6 +5,8 @@ const connection = require('../connection');
 const urlencodedParser = bodyParser.urlencoded({extended: false});
 const path = require('path');
 
+const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+
 route.get('/', async (req, res) => {
     const params = {
         requests: [],
@@ -58,8 +60,8 @@ route.get('/', async (req, res) => {
         if(err) return res.render("requests", {params: params});
         // console.log(result);
         for(const request of result){
-            request.created_at = new Date(request.created_at).toLocaleDateString() + " " + new Date(request.created_at).toLocaleTimeString();
-            request.closed_at = request.closed_at ? new Date(request.closed_at).toLocaleDateString() + " " + new Date(request.closed_at).toLocaleTimeString() : null;
+            request.created_at = new Date(request.created_at).toLocaleDateString('en-us',dateOptions);
+            request.closed_at = request.closed_at ? new Date(request.closed_at).toLocaleDateString('en-us',dateOptions) : null;
             request.category_id = request.category_id ? String(request.category_id).split(",").map(c => parseInt(c)) : [];
             request.status = request.open === 0 ? "Closed" : request.category_id.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
             const meeting = meetings.find(me => me.id === request.meeting_id);
@@ -290,7 +292,7 @@ route.get('/view/:id', (req, res) => {
             //     params.sent_to.push(user[0]);
             // }
         }
-        const remarks = await connection.query(`SELECT re.id, re.created_by, re.created_at, re.remark, us.level,
+        const remarks = await connection.query(`SELECT re.id, re.created_by, re.created_at, re.remark, us.level, re.meeting_remarks,
             CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") as name, us.level AS remarked_by
             FROM remarks re LEFT JOIN user us ON re.created_by = us.id WHERE re.request_id = ? ORDER BY re.created_at ASC`, [req_id])
         const categories = await connection.query("SELECT * FROM categories");
@@ -301,23 +303,24 @@ route.get('/view/:id', (req, res) => {
         params = {
             ...params,
             ...result[0],
-            created_at : new Date(result[0].created_at).toLocaleDateString() + " " + new Date(result[0].created_at).toLocaleTimeString(),
-            closed_at: result[0].closed_at ? new Date(result[0].closed_at).toLocaleDateString() + " " + new Date(result[0].closed_at).toLocaleTimeString() : null,
+            created_at : new Date(result[0].created_at).toLocaleDateString('en-us',dateOptions),
+            closed_at: result[0].closed_at ? new Date(result[0].closed_at).toLocaleDateString('en-us',dateOptions) : null,
             categories: categories,
-            filepath: result[0].filepath ? result[0].filepath.replace("public\\","").replace("public/","") : null,
-            filetype: result[0].filepath ? path.extname(result[0].filepath) : null,
+            filepath: result[0].filepath ? result[0].filepath.split(",").map(fp => fp.replace("public\\","").replace("public/","")) : [],
+            filetype: result[0].filepath ? result[0].filepath.split(",").map(fp => path.extname(fp)) : [],
             level_2_remarks: remarks.filter(re => parseInt(re.level) === 2),
             level_3_4_remarks: remarks.filter(re => [3,4].includes(parseInt(re.level))),
             level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),
             level_4_remarks: remarks.filter(re => parseInt(re.level) === 4),
-            meeting_remarks: remarks.filter(re => parseInt(re.level) === 1),
+            meeting_remarks: remarks.filter(re => parseInt(re.level) === 4),
+            meeting_remarks: remarks.filter(re => re.meeting_remarks),
             category_ids: category_ids,
             category_names: result[0].category_id ? category_ids.map(c => categories.find(ca => ca.id == c).name) : [],
             user_level: req.session.user.level,
             meeting_date: result[0].meeting_date
         }
         params.status = params.open === 0 ? "Closed" : params.category_ids.length > 0 && params.approved ? "Sent to Departmental Review" : params.category_ids.length > 0 && !params.approved ? "Sent for Department Approval" : "Open";
-        // console.log(params.filepath);
+        // console.log(params.filetype);
         return res.render("viewRequest", {params: params});
     });
 });
@@ -414,13 +417,30 @@ route.post("/editOSRemarks", async (req, res) => {
     else res.end(JSON.stringify({error: true}));
 });
 
-route.post("/forward", async (req, res) => {
+route.post("/forward", fileUpload({createParentPath: true}), async (req, res) => {
     const id = req.body.id;
     const forward = parseInt(req.body.forward);
     const remarks = req.body.remarks;
+    const file = req.files ? req.files.file : null;
+
     if(id && remarks && [0,1].includes(forward)){
-        const update_sql = `UPDATE request SET forwarded = ? WHERE id = ?`;
-        await connection.query(update_sql, [forward, id], async (err, result) => {
+        let filePath = null;
+        let arr = [];
+        if(file){
+            const filename = file.name.replace(/\s+/g, "_").replace(/\s+/g, "_").split(".");
+            filePath = path.join("public","files", `${filename[0]}${new Date().getTime()}.${filename[1]}`);
+            file.mv(filePath, err => {
+                if(err) return res.redirect("/requests/add");
+            });
+            const prePath = await connection.query("SELECT filepath FROM request WHERE id = ?",[id]);
+            if(prePath[0]?.filepath){
+                arr = prePath[0].filepath.split(",");
+            }
+            arr.push(filePath);
+        }
+        const update_sql = `UPDATE request SET forwarded = ?${file ? `, filepath = '${arr.join(",").replace(/\\/g,"\\\\")}'` : ""} WHERE id = ?`;
+        await connection.query(update_sql, [0, id], async (err, result) => {
+            // console.log(err);
             if(err) {
                 req.session.queryError = true;
                 return res.redirect("/requests");
@@ -440,7 +460,7 @@ route.post("/forward", async (req, res) => {
 });
 
 route.post("/close", async (req, res) => {
-    const id = req.body.id;
+    const id = parseInt(req.body.id);
     const remarks = req.body.remarks;
     if(id && remarks){
         const update_sql = `UPDATE request SET open = ?, closed_by = ?, closed_at = now() WHERE id = ?`;
@@ -449,7 +469,7 @@ route.post("/close", async (req, res) => {
                 req.session.queryError = true;
                 return res.redirect("/requests");
             }
-            const insert_sql = `INSERT INTO remarks(request_id, meeting_remaks, created_by, created_at, remark) VALUES (?,?,?,now(),?)`;
+            const insert_sql = `INSERT INTO remarks(request_id, meeting_remarks, created_by, created_at, remark) VALUES (?,?,?,now(),?)`;
             await connection.query(insert_sql, [id, 1, req.session.user.username, remarks], (err, result) => {
                 // console.log(err);
                 if(err) req.session.queryError = true;

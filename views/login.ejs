@@ -19,57 +19,63 @@
 	</head>
 	<body>
 		<div class="login">
-			<% if(!params.password_change) { %>
-				<h1 class="titleh1">Login</h1>
-				<form action="/login" method="post">
-					<label for="username">
-						<i class="fas fa-user"></i>
-					</label>
-					<input type="text" name="username" placeholder="Username" id="username" required>
-					<% if (params.usernameError) { %>
-						<div class="alert alert-danger mt-2 w-100" role="alert">
-							<strong>Invalid Username</strong>
-						</div>
-					<% } %>
-					<label for="password">
-						<i class="fas fa-lock"></i>
-					</label>
-					<input type="password" name="password" placeholder="Password" id="password" minlength="3" required>
-					<% if (params.passwordError) { %>
-						<div class="alert alert-danger mt-2 w-100" role="alert">
-							<strong>Invalid Password</strong>
-						</div>
-					<% } %>
-					<input type="submit" value="Login"/>
-					<% if (params.loginError) { %>
-						<div class="alert alert-danger mt-2 w-75 mx-auto" role="alert">
-							<strong>Invalid Username and Password Combination</strong>
-						</div>
-					<% } %>
-				</form>
-			<% } else { %>
-				<h1 class="titleh1">Password Update</h1>
-				<form>
-					<input type="hidden" id="user_id" value="<%= params.id %>"/>
-					<label for="change_password">
-						<i class="fas fa-user"></i>
-					</label>
-					<input type="password" placeholder="Password" id="change_password" minlength="6" required>
-					<label for="password">
-						<i class="fas fa-lock"></i>
-					</label>
-					<input type="password" placeholder="Re-enter Password" id="change_password_1" minlength="6" required>
-					<div class="alert alert-danger mt-2 w-100" role="alert" id="passwordErrorDiv" style="display: none;">
-						<strong>Invalid Password/s</strong>
-					</div>
-					<% if(params.queryError) { %>
-						<div class="alert alert-danger mt-2 w-100" role="alert">
+			<div class="w-100 text-center login-logo">
+				<img src="/images/indian_rail.png" width="100" class="mb-1" style="border-radius: 500px;"/>
+				<h5>Solapur Division PNM Module</h5>
+			</div>
+			<div class="inner-login">
+				<% if(!params.password_change) { %>
+					<h1 class="titleh1">Login</h1>
+					<form action="/login" method="post">
+						<label for="username">
+							<i class="fas fa-user"></i>
+						</label>
+						<input type="text" name="username" placeholder="Username" id="username" required>
+						<% if (params.usernameError) { %>
+							<div class="alert alert-danger mt-2 w-100" role="alert">
+								<strong>Invalid Username</strong>
+							</div>
+						<% } %>
+						<label for="password">
+							<i class="fas fa-lock"></i>
+						</label>
+						<input type="password" name="password" placeholder="Password" id="password" minlength="3" required>
+						<% if (params.passwordError) { %>
+							<div class="alert alert-danger mt-2 w-100" role="alert">
+								<strong>Invalid Password</strong>
+							</div>
+						<% } %>
+						<input type="submit" value="Login"/>
+						<% if (params.loginError) { %>
+							<div class="alert alert-danger mt-2 w-75 mx-auto" role="alert">
+								<strong>Invalid Username and Password Combination</strong>
+							</div>
+						<% } %>
+					</form>
+				<% } else { %>
+					<h1 class="titleh1">Password Update</h1>
+					<form>
+						<input type="hidden" id="user_id" value="<%= params.id %>"/>
+						<label for="change_password">
+							<i class="fas fa-user"></i>
+						</label>
+						<input type="password" placeholder="Password" id="change_password" minlength="6" required>
+						<label for="password">
+							<i class="fas fa-lock"></i>
+						</label>
+						<input type="password" placeholder="Re-enter Password" id="change_password_1" minlength="6" required>
+						<div class="alert alert-danger mt-2 w-100" role="alert" id="passwordErrorDiv" style="display: none;">
 							<strong>Invalid Password/s</strong>
 						</div>
-					<% } %>
-					<button type="button" id="btn_password_change">Submit</button>
-				</form>
-			<% } %>
+						<% if(params.queryError) { %>
+							<div class="alert alert-danger mt-2 w-100" role="alert">
+								<strong>Invalid Password/s</strong>
+							</div>
+						<% } %>
+						<button type="button" id="btn_password_change">Submit</button>
+					</form>
+				<% } %>
+			</div>
 		</div>
 		<script>
 			$(document).ready(function(){

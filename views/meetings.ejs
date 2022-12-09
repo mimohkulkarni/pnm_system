@@ -38,7 +38,7 @@
                 </div>      
               <% } %>
             <% if (params.queryError) { %>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                   <strong>Opps! Something unexpected happened! Please try again later!</strong>
                   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -165,7 +165,7 @@
                             </div>
                             <div class="col-6 px-2 mt-3">
                                 <select class="form-control" id="union_id">
-                                    <option selected>Select</option>
+                                    <option selected disabled value="0">Select</option>
                                     <option value="1">NRMU</option>
                                     <option value="2">CRMS</option>
                                 </select>
@@ -174,7 +174,11 @@
                         <div class="alert alert-danger alert-dismissible fade show" role="alert" id="meetingErrorDiv" style="display: none;">
                             <strong>Invalid entries!</strong>
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="meetingNameDuplicateDiv" style="display: none;">
+                            <strong>Meeting name already exists!</strong>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             </button>
                         </div>
                     </div>
@@ -208,7 +212,8 @@
             const meeting_date = $("#meeting_date").val();
             const meeting_name = $("#meeting_name").val();
             const union_id = $("#union_id").val();
-            if(meeting_date && meeting_name && union_id){
+            const isDuplicateName = meetings.find(me => me.name == meeting_name);
+            if(meeting_date && meeting_name && union_id && !isDuplicateName){
                 const form = $('<form method="post"></form>').prop("action", meeting_id ? "/meetings/edit" : "/meetings/add");
                 if(meeting_id) form.append($("<input>").attr("type", "hidden").attr("name", "id").val(meeting_id));
                 form.append($("<input>").attr("type", "hidden").attr("name", "meeting_date").val(meeting_date));
@@ -216,13 +221,32 @@
                 form.append($("<input>").attr("type", "hidden").attr("name", "union_id").val(union_id));
                 form.appendTo('body').submit();
                 $("#meeting_modal").modal("hide");
+                $("#meetingNameDuplicateDiv").hide();
+                $("#meetingErrorDiv").hide();
             }
-            else $("#meetingErrorDiv").show();
+            else if(isDuplicateName){
+                $("#meetingNameDuplicateDiv").show();
+                $("#meetingErrorDiv").hide();                
+            } 
+            else{
+                $("#meetingNameDuplicateDiv").hide();
+                $("#meetingErrorDiv").show();
+            } 
         });
 
-        $('#myModal').on('hidden.bs.modal', function (e) {
+        $('#meeting_modal').on('hidden.bs.modal', function (e) {
             $("#meetingErrorDiv").hide();
             meeting_id = null;
+        });
+
+        $('#meeting_modal').on('shown.bs.modal', function (e) {
+            if(!meeting_id){
+                $("#meeting_date").val("");
+                $("#meeting_name").val("");
+                $("#union_id").val(0);
+                $("#modal_title").text("Create Meeting")
+                $("#btn_add_meeting").text("Create")
+            }
         });
 
       });

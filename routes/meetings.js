@@ -1,6 +1,8 @@
 const route = require('express').Router()
 const connection = require('../connection');
 
+const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+
 route.get('/', async(req, res) => {
     const params = {
         meetings: [],
@@ -31,7 +33,7 @@ route.get('/', async(req, res) => {
         for (const meeting of result) {
             const assigned_requests = await connection.query(`SELECT count(*) as count FROM request WHERE meeting_id = ?`,[meeting.id]);
             meeting.assigned_requests = assigned_requests[0].count;
-            meeting.meeting_date = new Date(meeting.meeting_date).toLocaleDateString() + " " + new Date(meeting.meeting_date).toLocaleTimeString();
+            meeting.meeting_date = new Date(meeting.meeting_date).toLocaleDateString('en-us',dateOptions);
             params.meetings.push(meeting);
         };
         // console.log(params);

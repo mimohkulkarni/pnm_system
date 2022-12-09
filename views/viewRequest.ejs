@@ -16,14 +16,15 @@
    <link href="/css/addRequest.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-   <%- include('./navbar', {page: "reports", user_level: params.user_level ? params.user_level : null}) -%>
+   <%- include('./navbar', {page: "requests", user_level: params.user_level ? params.user_level : null}) -%>
+   <% const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }; %>
    <div class="request-list" id="report">
       <div class="request row">
          <div class="col-lg-12 col-md-12 col-sm-12 text-right px-5">
             <span class="status <%- params.status === 'Closed' ? 'status-closed' : '' %>"><%= params.status %></span>
          </div>
          <div class="col-lg-12 col-md-12 col-sm-12">
-            <h3><%= params.title %></h3>
+            <h3 class="mt-2"><%= params.title %></h3>
             <p class="mt-2 mb-4"><%= params.description %></p>
          </div>
          <div class="col-lg-12 col-md-12 col-sm-12 row">
@@ -115,7 +116,7 @@
                      <ul>
                         <% params.level_2_remarks.forEach(remark => { %>
                            <li>
-                              <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString() + " " + new Date(remark.created_at).toLocaleTimeString() %></p>
+                              <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString('en-us',dateOptions) %></p>
                               <p><%= remark.remark %></p>
                            </li>
                         <% }); %>
@@ -130,7 +131,7 @@
                      <ul>
                         <% params.level_3_4_remarks.forEach(remark => { %>
                            <li>
-                              <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString() + " " + new Date(remark.created_at).toLocaleTimeString() %></p>
+                              <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString('en-us',dateOptions) %></p>
                               <div class="row">
                                  <div class="col-11" id="osRemark<%= remark.id %>"><%= remark.remark %></div>
                                  <% if(params.user_level === 4) { %>
@@ -161,7 +162,10 @@
                      <b>Meeting Remarks</b>
                      <ul>
                         <% params.meeting_remarks.forEach(remark => { %>
-                           <li><%= remark.remark %></li>
+                           <li>
+                              <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString('en-us',dateOptions) %></p>
+                              <p><%= remark.remark %></p>
+                           </li>
                         <% }); %>
                      </ul>
                   </div>
@@ -181,18 +185,29 @@
                <strong>Please enter valid remarks.</strong>
                </div>
          </div>
-         <% if (params.filepath) { %>
-            <% if([".png",".jpeg",".jpg"].includes(params.filetype)) { %>  
-               <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
-                  <div class="request-card">
-                     <b>Attachments</b>
-                     <img class="img-responsive my-3 ml-3" style="cursor: pointer;" width="100" src="../../<%= params.filepath %>"
-                        alt="request_image" data-toggle="modal" data-target="#imageModal" />
+         <% if (params.user_level === 3) { %>
+            <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
+               <label class="label font-weight-bold ml-3" for="fileUpload">Upload File</label><br/>
+               <input name="file" class="js-input ml-3" id="fileUpload" type="file" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png, image/jpeg,.pdf,.csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"/>
+            </div>
+            <div class="alert alert-danger mt-2 w-100" role="alert" id="fileError" style="display: none;">
+               <strong>File size too big. (max 5MB)</strong>
+            </div>
+         <% } %>
+         <% if (params.filepath.length > 0) { %>
+            <% params.filepath.forEach((fp,i) => { %>
+               <% if([".png",".jpeg",".jpg"].includes(params.filetype[i])) { %>  
+                  <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
+                     <div class="request-card">
+                        <b>Attachments</b>
+                        <img class="img-responsive my-3 ml-3" style="cursor: pointer;" width="100" src="../../<%= fp %>"
+                           alt="request_image" data-toggle="modal" data-target="#imageModal" />
+                     </div>
                   </div>
-               </div>
-            <% } %>
-            <a class="btn btn-primary my-3 ml-3" href="../../<%= params.filepath %>" download target="_blank">Download Attachment</a>
-         <% } %>            
+               <% } %>
+               <a class="btn btn-primary my-3 ml-3" href="../../<%= fp %>" download target="_blank">Download <%- i === 0 ? "Request" : "BO" %> Attachment</a>
+            <% }) %>
+         <% } %>
          <% if (params.queryError) { %>
             <div class="col-12">
                <div class="alert alert-danger mt-4 w-100" role="alert">
@@ -307,7 +322,7 @@
          const req_id = <%- parseInt(params.id) %>;
          const remarksError = <%- params.remarksError ? params.remarksError : "null" %>;
          const level_4_remarks_given = <%- params.level_4_remarks.length > 0 ? "true" : "false" %>;
-         const fileType = <%- params.filetype ? JSON.stringify(params.filetype) : "null" %>;
+         const fileType = <%- params.filetype ? JSON.stringify(params.filetype) : JSON.stringify([]) %>;
          const curr_meeting_id = <%- params.meeting_id ? JSON.stringify(params.meeting_id) : "null" %>;
          const freeze = <%- params.freeze ? "true" : "false" %>;
          meeting_time = new Date(meeting_time);
@@ -396,8 +411,11 @@
          $("#btn_forward").click(function() {
             const remarks = $("#remarks").val();
             if([3,4].includes(user_level) && remarks){
-               const form = $('<form method="post"></form>').prop("action", "/requests/forward");
+               const form = $('<form method="post" enctype="multipart/form-data"></form>').prop("action", "/requests/forward");
                form.append($("<input>").attr("type", "hidden").attr("name", "id").val(req_id));
+               if(user_level === 3 && $("#fileUpload").get(0).files[0]){
+                  form.append($("#fileUpload"));
+               }
                form.append($("<input>").attr("type", "hidden").attr("name", "forward").val(user_level === 3 ? 1 : 0));
                form.append($("<input>").attr("type", "hidden").attr("name", "remarks").val(remarks));
                form.appendTo('body').submit();
@@ -490,10 +508,16 @@
          $('#imageModal').on('show.bs.modal', function (event) {
             const button = $(event.relatedTarget);
             const src = button.prop('src') ? button.prop('src') : button.prop("href");
-            if(src && fileType && [".png",".jpeg",".jpg"].includes(fileType)){
+            if(src && fileType.length > 0){
                $("#imageModalImg").show();
                $("#imageModalImg").prop("src",src);
             }
+         });
+
+         $("#fileUpload").on("change", function(){
+            const file = $(this).get(0).files[0];
+            console.log(file);
+            if(file.size > (5 * 1024 * 1024)) $("#fileError").show();
          });
       });
    </script>
