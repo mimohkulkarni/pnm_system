@@ -19,18 +19,18 @@ route.get('/', async (req, res) => {
             FROM request re LEFT JOIN user us ON re.created_by = us.id 
             WHERE 
             ${[3,4].includes(params.user_level) 
-                ? `re.category_id= '${req.session.user.category_id}' OR re.category_id LIKE '%,${req.session.user.category_id},%' 
-                    OR re.category_id LIKE '%,${req.session.user.category_id}' OR re.category_id LIKE '${req.session.user.category_id},%' 
-                    AND re.approved = 1 
-                    ${params.user_level === 3 
-                    ? `AND re.forwarded = 0` 
-                    : `AND (re.forwarded = 1 OR re.sent_to = '${req.session.user.username}' OR 
-                        re.sent_to LIKE '%,${req.session.user.username},%' OR re.sent_to LIKE '%,${req.session.user.username}' 
-                        OR re.sent_to LIKE '${req.session.user.username},%')`
-                    }` 
-                : params.user_level === 5 
-                    ? "re.union_id = us.union_id" 
-                    : "1"} ORDER BY re.id ASC`;
+            ? `re.category_id= '${req.session.user.category_id}' OR re.category_id LIKE '%,${req.session.user.category_id},%' 
+                OR re.category_id LIKE '%,${req.session.user.category_id}' OR re.category_id LIKE '${req.session.user.category_id},%' 
+                AND re.approved = 1 
+                ${params.user_level === 3 
+                ? `AND re.forwarded = 0` 
+                : `AND (re.forwarded = 1 OR re.sent_to = '${req.session.user.username}' OR 
+                    re.sent_to LIKE '%,${req.session.user.username},%' OR re.sent_to LIKE '%,${req.session.user.username}' 
+                    OR re.sent_to LIKE '${req.session.user.username},%')`
+                }` 
+            : params.user_level === 5 
+                ? `re.union_id = ${req.session.user.union_id}` 
+                : "1"} ORDER BY re.id ASC`;
     // console.log(requests_query);
     if(req.session.addRequest){
         params.add = true;
