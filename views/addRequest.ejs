@@ -17,7 +17,7 @@
       <h1 class="titleh1">
          <%- params.id ? "Edit Item" : "Create Item" %>
       </h1>
-      <form class="contact-form row" enctype="multipart/form-data" action="./<%- params.id ? '' : 'add' %>" method="post" id="requestForm">
+      <form class="contact-form row" enctype="multipart/form-data" action="./<%- params.id ? '' + params.id : 'add' %>" method="post" id="requestForm">
          <% if(params.id) { %>
             <input name="id" type="hidden" value='<%= params.id %>' />
          <% } %>
@@ -45,7 +45,7 @@
           <% } %>
          <div class="form-field col-lg-12 mt-5">
             <select name="meeting" class="form-control">
-              <option selected>Select Meeting<span class="required">*</span></label></option>
+              <option selected disabled>Select Meeting<span class="required">*</span></label></option>
               <% params.meetings.forEach(meeting => { %>
                 <option value="<%= meeting.id %>" <%- params.meeting_id === meeting.id ? "selected" : "" %>><%= meeting.name %></option>
              <% }) %>

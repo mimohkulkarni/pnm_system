@@ -141,7 +141,7 @@ route.get('/edit/:id', async (req, res) => {
     }
 });
 
-route.post('/edit', async (req, res) => {
+route.post('/edit/:id', async (req, res) => {
     const id = parseInt(req.body.id);
     const first_name = req.body.first_name;
     const last_name = req.body.last_name;
@@ -153,6 +153,7 @@ route.post('/edit', async (req, res) => {
     const category = req.body.category;
 
     const params = {
+        id: id,
         queryError: false,
         fnameError: false,
         lnameError: false,

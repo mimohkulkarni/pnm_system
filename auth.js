@@ -25,7 +25,7 @@ module.exports = (req, res, next) => {
             res.locals.userName = req.session.user?.name;
             return next();
         } else {
-            return res.redirect("/401");
+            return res.redirect("/403");
         }
     }
 }

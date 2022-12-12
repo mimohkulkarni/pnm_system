@@ -2,7 +2,6 @@ const route = require('express').Router()
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const connection = require('../connection');
-const urlencodedParser = bodyParser.urlencoded({extended: false});
 const path = require('path');
 
 const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -31,7 +30,7 @@ route.get('/', async (req, res) => {
                     }` 
                 : params.user_level === 5 
                     ? "re.union_id = us.union_id" 
-                    : "1"} ORDER BY re.id DESC`;
+                    : "1"} ORDER BY re.id ASC`;
     // console.log(requests_query);
     if(req.session.addRequest){
         params.add = true;
@@ -57,13 +56,15 @@ route.get('/', async (req, res) => {
         params.categories = categories;
     }
     connection.query(requests_query, async(err, result)=>{
+        // console.log(err);
         if(err) return res.render("requests", {params: params});
-        // console.log(result);
         for(const request of result){
+            const count = await connection.query("SELECT count(*) as level_4_remarks FROM `remarks` re JOIN user us ON re.created_by = us.id WHERE re.`request_id` = ? AND us.level = ?",[request.id,4]);
+            request.level_4_remarks = count[0]?.level_4_remarks ? count[0].level_4_remarks : 0;
             request.created_at = new Date(request.created_at).toLocaleDateString('en-us',dateOptions);
             request.closed_at = request.closed_at ? new Date(request.closed_at).toLocaleDateString('en-us',dateOptions) : null;
             request.category_id = request.category_id ? String(request.category_id).split(",").map(c => parseInt(c)) : [];
-            request.status = request.open === 0 ? "Closed" : request.category_id.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
+            request.status = request.open === 0 ? "Closed" : request.level_4_remarks > 0 ? "Marked For Closer" : request.category_id.length > 0 && request.approved ? "Sent to Departmental Review" : request.category_id.length > 0 && !request.approved ? "Sent for Department Approval" : "Open";
             const meeting = meetings.find(me => me.id === request.meeting_id);
             if(new Date(meeting.meeting_date) < curr_date && request.open){
                 let new_meeting_id = meetings.find(me => new Date(me.meeting_date) > curr_date && meeting.union_id == request.union_id)?.id;
@@ -108,7 +109,7 @@ route.post("/add", fileUpload({createParentPath: true}), async (req, res) => {
 
     if(title && desc && meeting){
         const requests_nos = await connection.query("SELECT count(*) as request_nos FROM request WHERE meeting_id = ?",[meeting]);
-        if(requests_nos[0]["request_nos"] >= 1){
+        if(requests_nos[0]["request_nos"] >= 30){
             req.session.limitError = true;
             return res.redirect("/requests")
         } 
@@ -172,7 +173,7 @@ route.get('/edit/:id', (req, res) => {
     });
 });
 
-route.post("/edit", fileUpload({createParentPath: true}), async (req, res) => {
+route.post("/edit/:id", fileUpload({createParentPath: true}), async (req, res) => {
     const id = req.body.id;
     const title = req.body.title;
     const desc = req.body.description;
@@ -190,7 +191,7 @@ route.post("/edit", fileUpload({createParentPath: true}), async (req, res) => {
         id: id
     }
 
-    if(id && title && desc && meeting_id){
+    if(id && title && desc && meeting_id && meeting_id > 0){
         let filePath = null;
         if(file){
             const filename = file.name.replace(/\s+/g, "_").replace(/\s+/g, "_").split(".");
@@ -216,7 +217,7 @@ route.post("/edit", fileUpload({createParentPath: true}), async (req, res) => {
     }
     else{
         if(!title) params.titleError = true;
-        if(!meeting_id) params.meetingError = true;
+        if(!meeting_id || meeting_id <= 0) params.meetingError = true;
         else params.descError = true;
         const meetings = await connection.query("SELECT * FROM meeting WHERE meeting_date >= now() AND union_id = ?",[req.session.user.union_id]);
         params.meetings = meetings;
@@ -310,7 +311,7 @@ route.get('/view/:id', (req, res) => {
             filetype: result[0].filepath ? result[0].filepath.split(",").map(fp => path.extname(fp)) : [],
             level_2_remarks: remarks.filter(re => parseInt(re.level) === 2),
             level_3_4_remarks: remarks.filter(re => [3,4].includes(parseInt(re.level))),
-            level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),
+            // level_3_remarks: remarks.filter(re => parseInt(re.level) === 3),
             level_4_remarks: remarks.filter(re => parseInt(re.level) === 4),
             meeting_remarks: remarks.filter(re => parseInt(re.level) === 4),
             meeting_remarks: remarks.filter(re => re.meeting_remarks),
@@ -319,7 +320,7 @@ route.get('/view/:id', (req, res) => {
             user_level: req.session.user.level,
             meeting_date: result[0].meeting_date
         }
-        params.status = params.open === 0 ? "Closed" : params.category_ids.length > 0 && params.approved ? "Sent to Departmental Review" : params.category_ids.length > 0 && !params.approved ? "Sent for Department Approval" : "Open";
+        params.status = params.open === 0 ? "Closed" : params.level_4_remarks.length > 0 ? "Marked For Closer" : params.category_ids.length > 0 && params.approved ? "Sent to Departmental Review" : params.category_ids.length > 0 && !params.approved ? "Sent for Department Approval" : "Open";
         // console.log(params.filetype);
         return res.render("viewRequest", {params: params});
     });
@@ -331,9 +332,8 @@ route.get("/getCategoryUsers",async (req, res) => {
         const users = [];
         for (const id of ids) {
             const update_sql = `SELECT id, CONCAT(first_name, " ", last_name, " (", designation, ")") as name FROM user WHERE category_id = ?`;
-            const user = await connection.query(update_sql, [ id ]);
-            if(user && user.length === 1) users.push(user);
-            else if(user && user.length > 1) user.forEach(u => users.push(u));
+            const users_res = await connection.query(update_sql, [ id ]);
+            if(users_res && users_res.length > 0) users_res.forEach(user => users.push(user));
         }
         res.end(JSON.stringify(users));
     }

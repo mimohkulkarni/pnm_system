@@ -87,7 +87,7 @@
                   </div>
                </div>
             <% } %>
-            <% if([1,2].includes(params.user_level) && !params.approved && params.level_3_remarks.length === 0 && params.level_4_remarks.length === 0) { %>
+            <% if([1,2].includes(params.user_level) && !params.approved && params.level_4_remarks.length === 0) { %>
                <div class="col-lg-12 col-md-12 col-sm-12 mt-4" id="changeDepartmentDiv">
                   <div class="request-card">
                      <b><%- params.category_names ? "Change Department" : "Department" %></b>
@@ -124,7 +124,7 @@
                   </div>
                </div>
             <% } %>
-            <% if(params.level_3_4_remarks.length > 0) { %> 
+            <% if(params.level_3_4_remarks.length > 0 && [3,4].includes(params.user_level)) { %> 
                <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
                   <div class="request-card">
                      <b>Department Remarks</b>
@@ -143,19 +143,21 @@
                      </ul>
                   </div>
                </div>
-            <% } %>
-            <!-- <% if(params.level_4_remarks.length > 0) { %> 
+            <% } else if(params.level_4_remarks.length > 0) { %> 
                <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
                   <div class="request-card">
-                     <b>BO Remarks</b>
+                     <b>Department Remarks</b>
                      <ul>
                         <% params.level_4_remarks.forEach(remark => { %>
-                           <li><%= remark.remark %></li>
+                           <li>
+                              <p><span class="font-weight-bold pr-3"><%= remark.name %></span> <%= new Date(remark.created_at).toLocaleDateString('en-us',dateOptions) %></p>
+                              <p><%= remark.remark %></p>
+                           </li>
                         <% }); %>
                      </ul>
                   </div>
                </div>
-            <% } %> -->
+            <% } %>
             <% if(params.meeting_remarks.length > 0) { %> 
                <div class="col-lg-12 col-md-12 col-sm-12 mt-4">
                   <div class="request-card">
@@ -222,6 +224,11 @@
                   </div>
             </div>
          <% } %>
+         <div class="col-12" id="freezeAlertDiv" style="display: none;">
+            <div class="alert alert-warning mt-4 w-100" role="alert">
+               <strong>This Item is freezed!</strong>
+            </div>
+         </div>
          <% if(params.open && ((!params.approved && params.user_level === 1) || (!params.approved && params.user_level === 2) || (params.approved && params.category_names && [3,4].includes(params.user_level)))) { %>
             <div class="w-100 text-right px-3 mt-3" id="btn_div">
                <% if(params.user_level === 4 && params.level_3_4_remarks.length === 0) { %>
@@ -248,7 +255,7 @@
          <div class="col-lg-12 col-md-12 col-sm-12 mt-3" id="level_1_btn_div">
             <% if(params.user_level === 1 && params.open) { %>
                <div class="w-100 text-right">
-                  <% if(params.level_3_remarks.length > 0 && !params.forwarded && params.approved) { %>
+                  <% if(params.level_4_remarks.length > 0 && !params.forwarded && params.approved) { %>
                      <button class="btn btn-success" type="button" id="btn_close">
                         Close Item
                      </button>
@@ -362,6 +369,7 @@
             $(".osRemark").remove();
             $("#changeDepartmentDiv").remove();
             $("#changeSentToDiv").remove();
+            $("#freezeAlertDiv").show();
          }
 
          $(".osRemark").click(function() {

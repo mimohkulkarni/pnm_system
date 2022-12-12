@@ -17,7 +17,7 @@
     <h1 class="titleh1">
        <%- params.id ? "Edit User" : "Create User" %>
     </h1>
-    <form class="contact-form row" action="<%- params.id ? '../edit' : './add' %>" method="post">
+    <form class="contact-form row" action="<%- params.id ? '../edit/' + params.id : './add' %>" method="post">
        <% if(params.id) { %>
           <input name="id" type="hidden" value='<%= params.id %>' />
        <% } %>
