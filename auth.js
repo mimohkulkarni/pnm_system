@@ -1,4 +1,4 @@
-const public_paths = ['/requests','/meetings','/requests/view']
+const public_paths = ['/requests','/meetings','/requests/view','/requests/getAllRequests']
 const level_5_paths = [...public_paths,'/requests/add','/requests/edit','/requests/delete'];
 const level_1_paths = [...public_paths,'/requests/setCategory','/requests/close','/requests/forwardToNextMeeting',
     '/requests/getCategoryUsers','/requests/freeze','/meetings/add','/meetings/edit','/meetings/delete',

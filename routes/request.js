@@ -1,5 +1,4 @@
 const route = require('express').Router()
-const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const connection = require('../connection');
 const path = require('path');
@@ -8,29 +7,11 @@ const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'nu
 
 route.get('/', async (req, res) => {
     const params = {
-        requests: [],
         add: false,
         edit: false,
         delete: false,
-        user_level: req.session.user.level
+        user_level: req.session?.user?.level
     }
-    const requests_query = `SELECT re.id, re.title,re.description, re.created_at, re.category_id, re.approved, re.open, re.prev_meeting,
-            re.union_id, CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.meeting_id 
-            FROM request re LEFT JOIN user us ON re.created_by = us.id 
-            WHERE 
-            ${[3,4].includes(params.user_level) 
-            ? `re.category_id= '${req.session.user.category_id}' OR re.category_id LIKE '%,${req.session.user.category_id},%' 
-                OR re.category_id LIKE '%,${req.session.user.category_id}' OR re.category_id LIKE '${req.session.user.category_id},%' 
-                AND re.approved = 1 
-                ${params.user_level === 3 
-                ? `AND re.forwarded = 0` 
-                : `AND (re.forwarded = 1 OR re.sent_to = '${req.session.user.username}' OR 
-                    re.sent_to LIKE '%,${req.session.user.username},%' OR re.sent_to LIKE '%,${req.session.user.username}' 
-                    OR re.sent_to LIKE '${req.session.user.username},%')`
-                }` 
-            : params.user_level === 5 
-                ? `re.union_id = ${req.session.user.union_id}` 
-                : "1"} ORDER BY re.id ASC`;
     // console.log(requests_query);
     if(req.session.addRequest){
         params.add = true;
@@ -48,17 +29,46 @@ route.get('/', async (req, res) => {
         params.limitError = true;
         req.session.limitError = false;
     }
+    return res.render('requests', {params: params});
+});
+
+
+route.get("/getAllRequests", async (req, res) => {
+    const params = {
+        requests: [],
+        limit: req.query.limit ? parseInt(req.query.limit) : 100
+    };
+    const user_level = req.session.user.user_level;
+    const requests_query = `SELECT re.id, re.title,re.description, re.created_at, re.category_id, re.approved, re.open, re.prev_meeting,
+            re.union_id, CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.meeting_id 
+            FROM request re LEFT JOIN user us ON re.created_by = us.id 
+            WHERE 
+            ${[3,4].includes(user_level) 
+            ? `re.category_id= '${req.session.user.category_id}' OR re.category_id LIKE '%,${req.session.user.category_id},%' 
+                OR re.category_id LIKE '%,${req.session.user.category_id}' OR re.category_id LIKE '${req.session.user.category_id},%' 
+                AND re.approved = 1 
+                ${user_level === 3 
+                ? `AND re.forwarded = 0` 
+                : `AND (re.forwarded = 1 OR re.sent_to = '${req.session.user.username}' OR 
+                    re.sent_to LIKE '%,${req.session.user.username},%' OR re.sent_to LIKE '%,${req.session.user.username}' 
+                    OR re.sent_to LIKE '${req.session.user.username},%')`
+                }` 
+            : user_level === 5 
+                ? `re.union_id = ${req.session.user.union_id}` 
+                : "1"}
+             ORDER BY re.id ASC LIMIT 0,${params.limit}`
+    // console.log(requests_query);
     const curr_date = new Date();
     const meetings = await connection.query("SELECT * FROM meeting");
-    params.meetings = meetings.filter(me => me.meeting_date > curr_date);
-    if([1,2].includes(params.user_level)){
+    // params.meetings = meetings.filter(me => me.meeting_date > curr_date);
+    params.meetings = [...meetings];
+    if([1,2].includes(user_level)){
         const categories = await connection.query("SELECT * FROM categories");
         params.categories = categories;
     }
-    connection.query(requests_query, async(err, result)=>{
-        // console.log(err);
-        if(err) return res.render("requests", {params: params});
-        for(const request of result){
+    const requests = await connection.query(requests_query);
+    if(requests && requests.length > 0){
+        for(const request of requests){
             const count = await connection.query("SELECT count(*) as level_4_remarks FROM `remarks` re JOIN user us ON re.created_by = us.id WHERE re.`request_id` = ? AND us.level = ?",[request.id,4]);
             request.level_4_remarks = count[0]?.level_4_remarks ? count[0].level_4_remarks : 0;
             request.created_at = new Date(request.created_at).toLocaleDateString('en-us',dateOptions);
@@ -83,8 +93,8 @@ route.get('/', async (req, res) => {
             params.requests.push(request);
         };
         // console.log(params);
-        return res.render('requests', {params: params});
-    });
+    }
+    return res.end(JSON.stringify(params));
 });
 
 route.get("/add", async (req, res) => {

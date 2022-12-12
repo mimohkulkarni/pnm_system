@@ -73,16 +73,19 @@
                         </div>
                     </div>
                 </div>
-                <% if(params.requests.length > 0) { %>
                     <!-- <div class="w-100 text-right mb-3">
                         <button class="btn btn-success" id="btnSend">
                             <i class="fas fa-paper-plane"></i> Send
                         </button>
                     </div> -->
                     <div class="row mb-3">
-                        <div class="<%- params.user_level === 1 ? 'col-3' : 'col-6' %>">
+                        <div class="<%- params.user_level !== 5 ? 'col-3' : 'col-6' %>">
+                            <div class="request-card">
+                                <b>Search item</b>
+                                <input type="text" class="form-control" id="inputItemSearch" placeholder="Enter Title"/>
+                            </div>
                         </div>
-                        <% if (params.user_level === 1) { %>
+                        <% if (params.user_level !== 5) { %>
                             <div class="col-lg-3 col-md-3 col-sm-3">
                                 <div class="request-card">
                                     <b>Union Type</b>
@@ -98,10 +101,7 @@
                             <div class="request-card">
                                 <b>Meeting</b>
                                 <select class="form-control" id="meetingSelect">
-                                    <option value="0">All</option>
-                                    <% params.meetings.forEach(meeting => { %>
-                                        <option value="<%= meeting.id %>"><%= meeting.name %></option>
-                                    <% }) %>
+                                    <option value="0" selected disabled>All</option>
                                 </select>
                              </div>
                         </div>
@@ -116,86 +116,64 @@
                              </div>
                         </div>
                     </div>
-                    <table class="table table-striped table-hover" id="requestsTable">
-                    </table>
-                <% } else { %>
-                    <h5 class="text-center font-weight-bold">No Items Found!</h5>
-                <% } %>
+                    <table class="table table-striped table-hover" id="requestsTable"></table>
+                    <div class="w-100 text-right">
+                        <button class="btn btn-primary" id="btnNext">Load Next 100 Items <i class="fas fa-arrow-right"></i></button>
+                    </div>
             </div>
         </div>
     </div>
     <script>
         $(document).ready(function(){
-            const requests = <%- params.requests.length > 0 ? JSON.stringify(params.requests) : [] %>;
+            let params = {};
+            let limit = 100;
             const user_level = <%- parseInt(params.user_level) %>;
-            const category_ids = <%- params.requests.length > 0 ? JSON.stringify(params.requests.map(r => r.category_id)) : "null" %>;
             $('[data-toggle="tooltip"]').tooltip();
-            $("#btnSend").hide();
-            const multiselect = $('.multiselect');
-            let i = 0;
-            multiselect.each(function(){
-                $(this).selectpicker('val',category_ids[i]);
-                i++;
+
+            function getRequests(){
+                fetch(`/requests/getAllRequests?limit=${limit}`).then(res => res.json()).then(res => {
+                    if(res){
+                        params = {...res};
+                        if(limit > params.requests.length) $("#btnNext").hide();
+                        displayRequests()
+                    }
+               })
+            }
+
+            $("#btnNext").click(function(){
+                limit += 100;
+                getRequests();
             });
-            
-            const checkbox = $('table tbody input[type="checkbox"]');
-            $("#selectAll").click(function(){
-                const selectAllChecked = this.checked
-                checkbox.each(function(){
-                    this.checked = selectAllChecked;
-                });
-                if(this.checked) $("#btnSend").show();
-                else $("#btnSend").hide();
-            });
-            checkbox.click(function(){
-                if(!this.checked && $("#selectAll").prop("checked")){
-                    $("#selectAll").prop("checked", false);
-                    $("#btnSend").hide();
-                }
-                let showSendBtn = false;
-                checkbox.each(function(){
-                    showSendBtn = showSendBtn || this.checked;
-                }); 
-                if(showSendBtn) $("#btnSend").show();
-                if(!showSendBtn) $("#btnSend").hide();
-            });
-            $("#btnSend").on("click", function(){
-                if([1,2].includes(user_level)){
-                    const ids = [];
-                    const categories = [];
-                    checkbox.each(function(){
-                        if(this.checked){
-                            const id = parseInt($(this).val());
-                            ids.push(id);
-                            categories.push($(`#category${id}`).selectpicker('val'))
-                        }
-                    });
-                    const form = $('<form method="post"></form>').prop("action", user_level == 1 ? "/requests/setCategory" : "/requests/setApproval");
-                    $("<input>").attr("type", "hidden").attr("name", "id").val(JSON.stringify(ids)).append(form);
-                    $("<input>").attr("type", "hidden").attr("name", "categories").val(JSON.stringify(categories)).append(form);
-                    // form.appendTo('body').submit();
-                }
-            });
-            
+                        
             const thead = `<thead><tr><th class="titleTh">Title</th><th class="descTh">Description</th><th>Created By</th>
                 <th>Created On</th><th>Status</th><th>Actions</th></tr></thead>`
             
             $("#unionSelect,#typeSelect,#meetingSelect").on("change", () => displayRequests());
+            $("#inputItemSearch").on("input", () => displayRequests());
+            $("#inputItemSearch").on("propertychange", () => displayRequests());
 
-            displayRequests();
+            getRequests();
 
             function displayRequests(){
                 const union = parseInt($("#unionSelect").val());
                 const type = parseInt($("#typeSelect").val());
                 const meeting = parseInt($("#meetingSelect").val());
-                let filteredRequests = [...requests];
+                const title = $("#inputItemSearch").val();
+                let filteredRequests = params.requests ? [...params?.requests] : [];
                 if(union)
                     filteredRequests = filteredRequests.filter(re => re.union_id === union);
                 if(type)
                     filteredRequests = filteredRequests.filter(re => (type === 1 && re.open === 1) || (type === 2 && !re.open));
                 if(meeting)
                     filteredRequests = filteredRequests.filter(re => re.meeting_id === meeting);
+                if(title)
+                    filteredRequests = filteredRequests.filter(re => re.title.includes(title));
                 $("#requestsTable").empty();
+                if(params.meetings && !meeting){
+                    $("#meetingSelect").empty();
+                    $("#meetingSelect").append("<option value='0'>All</option>");
+                    params.meetings.forEach(meeting => $("#meetingSelect").append(`<option value='${meeting.id}'>${meeting.name}</option>`))
+                }
                 if(filteredRequests.length > 0){
                     $("#requestsTable").append(thead);
                     filteredRequests.forEach(request => {
