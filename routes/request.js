@@ -38,7 +38,7 @@ route.get("/getAllRequests", async (req, res) => {
         requests: [],
         limit: req.query.limit ? parseInt(req.query.limit) : 100
     };
-    const user_level = req.session.user.user_level;
+    const user_level = req.session.user.level;
     const requests_query = `SELECT re.id, re.title,re.description, re.created_at, re.category_id, re.approved, re.open, re.prev_meeting,
             re.union_id, CONCAT(us.first_name, " ", us.last_name, " (", us.designation, ")") AS created_by, re.meeting_id 
             FROM request re LEFT JOIN user us ON re.created_by = us.id 

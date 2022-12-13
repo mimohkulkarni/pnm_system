@@ -31,7 +31,6 @@ route.post("/", (req,res) => {
         const login_query = `SELECT id, CONCAT(first_name, " ", last_name) as name, level, 
             category_id, union_id, active, password_change FROM user WHERE emp_no = ? AND password = ?`;
         connection.query(login_query, [username,password], (err, result, fields) => {
-            // connection.end();
             if(err || result.length !== 1 || (result.length === 1 && result[0].active == 0)){
                 params.loginError = true;
                 return res.render('login',{params:params});
@@ -43,6 +42,7 @@ route.post("/", (req,res) => {
                 category_id: parseInt(result[0].category_id),
                 union_id: parseInt(result[0].union_id)
             }
+            console.log(req.session.user);
             if(result[0].password_change){
                 req.session.password_change = true;
                 req.session.user_id = result[0].id;
